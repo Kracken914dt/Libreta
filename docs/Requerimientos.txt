@@ -1,0 +1,84 @@
+Sí, puedes mantener la separación por categorías y conservar los códigos, pero eliminando las palabras **"Requerimiento Funcional"** y **"Requerimiento No Funcional"** del contenido. Quedaría así:
+
+## Requerimientos Funcionales
+
+### RF-01: Autenticación y Seguridad
+
+* **RF-01.1:** Inicio de sesión por Magic Link (OTP).
+* **RF-01.2:** Aislamiento multiusuario mediante políticas RLS.
+* **RF-01.3:** Cierre de sesión y limpieza de caché local.
+
+### RF-02: Gestión de Clientes
+
+* **RF-02.1:** Registro de clientes con cédula y teléfono.
+* **RF-02.2:** Modificación y eliminación de clientes.
+* **RF-02.3:** Búsqueda dinámica de clientes por texto.
+* **RF-02.4:** Cálculo automático del saldo pendiente.
+
+### RF-03: Gestión de Préstamos / Fiados
+
+* **RF-03.1:** Registro de fiados mediante carrito de compras.
+* **RF-03.2:** Registro manual de productos sin control de stock.
+* **RF-03.3:** Configuración de fecha de pago y abono inicial.
+* **RF-03.4:** Asignación de días sugeridos para el pago.
+* **RF-03.5:** Devolución de préstamos con restauración de stock y abonos.
+
+### RF-04: Gestión de Abonos
+
+* **RF-04.1:** Registro de abonos parciales o totales.
+* **RF-04.2:** Actualización automática del estado del préstamo a pagado.
+* **RF-04.3:** Registro histórico de ingresos y egresos.
+
+### RF-05: Gestión de Inventario
+
+* **RF-05.1:** Registro de productos con precio, stock e imagen.
+* **RF-05.2:** Creación y administración de categorías.
+* **RF-05.3:** Validación de disponibilidad de stock al registrar un fiado.
+* **RF-05.4:** Actualización en tiempo real del valor total del inventario.
+
+### RF-06: Panel de Control (Dashboard)
+
+* **RF-06.1:** Visualización de indicadores clave del negocio.
+* **RF-06.2:** Consulta del historial de recaudos.
+* **RF-06.3:** Visualización de las últimas transacciones.
+
+### RF-07: Validación en Tiempo Real
+
+* **RF-07.1:** Restricción de caracteres inválidos en campos numéricos.
+* **RF-07.2:** Validación de cédula y número de celular.
+* **RF-07.3:** Validación de longitud para nombres y descripciones.
+
+---
+
+## Requerimientos No Funcionales
+
+### RNF-01: Usabilidad y Experiencia de Usuario
+
+* **RNF-01.1:** Soporte para tema oscuro y tema claro.
+* **RNF-01.2:** Interfaz responsiva con enfoque *mobile first*.
+* **RNF-01.3:** Uso de diálogos personalizados en lugar de alertas nativas.
+* **RNF-01.4:** Animaciones de transición inferiores a 300 ms.
+
+### RNF-02: Rendimiento
+
+* **RNF-02.1:** Carga y actualización silenciosa de datos.
+* **RNF-02.2:** Búsquedas instantáneas mediante filtrado local.
+* **RNF-02.3:** Optimización del tamaño del paquete de la aplicación.
+
+### RNF-03: Seguridad y Privacidad
+
+* **RNF-03.1:** Autenticación segura mediante Magic Link.
+* **RNF-03.2:** Protección de datos mediante políticas Row Level Security (RLS).
+* **RNF-03.3:** Eliminación de la información de sesión al cerrar la aplicación.
+
+### RNF-04: Portabilidad y Compatibilidad
+
+* **RNF-04.1:** Compatibilidad con Chrome, Edge, Firefox y Safari.
+* **RNF-04.2:** Funcionamiento como aplicación web progresiva (PWA) y acceso desde dispositivos móviles.
+
+### RNF-05: Mantenibilidad y Escalabilidad
+
+* **RNF-05.1:** Separación entre la interfaz de usuario y la lógica de negocio.
+* **RNF-05.2:** Centralización de las reglas de validación.
+* **RNF-05.3:** Base de datos optimizada mediante índices para búsquedas eficientes.
+

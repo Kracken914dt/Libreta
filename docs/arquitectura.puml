@@ -1,4 +1,4 @@
-@startuml Arquitectura_La_Libreta
+@startuml
 
 title Diagrama de Arquitectura de Software — La Libreta Digital
 
@@ -25,27 +25,33 @@ skinparam database {
 }
 
 node "Dispositivo del Usuario (Navegador)" as ClientNode {
+
   package "Frontend (React SPA)" {
-    component [Vite Dev Server / Bundler] as Vite
-    component [main.jsx] as Entry
-    component [App.jsx (Layout & Nav)] as App
-    component [AppContext.jsx (Context & State)] as Context
-    component [Components] as Comp
-    component [validation.js] as Validation
-    
-    Entry -> App
-    App -> Context : "Consume"
-    Comp -> Context : "Consume & Dispara Acciones"
-    App -> Comp : "Renderiza Vistas"
-    Comp -> Validation : "Aplica validaciones"
+
+    component "Vite Dev Server / Bundler" as Vite
+    component "main.jsx" as Entry
+    component "App.jsx (Layout & Nav)" as App
+    component "AppContext.jsx (Context & State)" as Context
+    component "Components" as Comp
+    component "validation.js" as Validation
+
+    Entry --> App
+    App --> Context : Consume
+    App --> Comp : Renderiza vistas
+    Comp --> Context : Consume y dispara acciones
+    Comp --> Validation : Aplica validaciones
+
   }
+
 }
 
 node "Infraestructura Supabase (BaaS)" as SupaNode {
-  component [Supabase Auth API] as AuthAPI
-  component [PostgREST API (CRUD Auto)] as REST_API
-  
+
+  component "Supabase Auth API" as AuthAPI
+  component "PostgREST API (CRUD Auto)" as REST_API
+
   database "PostgreSQL Database" as DB {
+
     folder "Tablas de Negocio" {
       [clientes] as T_Clientes
       [prestamos] as T_Prestamos
@@ -53,30 +59,41 @@ node "Infraestructura Supabase (BaaS)" as SupaNode {
       [productos] as T_Productos
       [categorias_productos] as T_Categorias
     }
+
     folder "Tabla de Seguridad" {
       [usuarios] as T_Usuarios
     }
+
     folder "Lógica de Base de Datos" {
       [Recalcular Estado Trigger] as Trigger
       [Row Level Security (RLS) Policies] as RLS
     }
+
   }
+
 }
 
-' Relaciones entre Cliente y Backend
-Context ──► AuthAPI : "Registro / Magic Link Login (HTTPS)"
-Context ──► REST_API : "Llamadas CRUD Seguras (Axios/Fetch con JWT Bearer)"
+'===========================
+' Relaciones Cliente ↔ Backend
+'===========================
 
-' Relaciones internas de Supabase
-AuthAPI ──► T_Usuarios : "Crea perfil de usuario (via PostgreSQL Trigger)"
-REST_API ──► RLS : "Filtra peticiones por usuario asignado"
-RLS ──► T_Clientes : "Evalúa permisos por fila"
-RLS ──► T_Prestamos
-RLS ──► T_Abonos
-RLS ──► T_Productos
-RLS ──► T_Categorias
+Context --> AuthAPI : Registro / Magic Link Login (HTTPS)
+Context --> REST_API : CRUD seguro (JWT Bearer)
 
-T_Abonos ──► Trigger : "Al insertar/actualizar/borrar"
-Trigger ──► T_Prestamos : "Modifica estado automáticamente"
+'===========================
+' Relaciones internas
+'===========================
+
+AuthAPI --> T_Usuarios : Crea perfil de usuario
+REST_API --> RLS : Verifica permisos
+
+RLS --> T_Clientes : Acceso por usuario
+RLS --> T_Prestamos
+RLS --> T_Abonos
+RLS --> T_Productos
+RLS --> T_Categorias
+
+T_Abonos --> Trigger : INSERT / UPDATE / DELETE
+Trigger --> T_Prestamos : Recalcula estado
 
 @enduml
