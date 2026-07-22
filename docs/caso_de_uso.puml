@@ -1,0 +1,122 @@
+@startuml Casos_de_Uso_La_Libreta
+
+title Diagrama de Casos de Uso — La Libreta Digital
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F3E8FF
+  BorderColor #7C3AED
+  FontColor #1E293B
+  ArrowColor #7C3AED
+}
+skinparam actor {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+}
+
+left to right direction
+
+actor "Comerciante\n(Usuario)" as USER
+actor "Supabase\n(Backend)" as SUPA
+
+rectangle "Sistema La Libreta Digital" {
+
+  ' ── Autenticación ──
+  package "Autenticación" {
+    usecase "Iniciar sesión\n(Magic Link OTP)" as UC_LOGIN
+    usecase "Cerrar sesión" as UC_LOGOUT
+  }
+
+  ' ── Gestión de Clientes ──
+  package "Gestión de Clientes" {
+    usecase "Registrar cliente" as UC_CREATE_CLI
+    usecase "Editar cliente" as UC_EDIT_CLI
+    usecase "Eliminar cliente" as UC_DELETE_CLI
+    usecase "Buscar cliente" as UC_SEARCH_CLI
+    usecase "Ver listado\nde clientes" as UC_LIST_CLI
+  }
+
+  ' ── Gestión de Préstamos ──
+  package "Gestión de Préstamos / Fiados" {
+    usecase "Registrar préstamo\n(con carrito)" as UC_CREATE_PREST
+    usecase "Editar préstamo" as UC_EDIT_PREST
+    usecase "Eliminar préstamo" as UC_DELETE_PREST
+    usecase "Devolver préstamo\n(reembolso + stock)" as UC_DEVOLVER
+    usecase "Seleccionar productos\ndel inventario" as UC_SELECT_PROD
+    usecase "Agregar producto\nmanual" as UC_MANUAL_PROD
+    usecase "Registrar abono\ninicial" as UC_ABONO_INI
+  }
+
+  ' ── Gestión de Abonos ──
+  package "Gestión de Abonos" {
+    usecase "Registrar abono" as UC_CREATE_ABONO
+    usecase "Eliminar abono" as UC_DELETE_ABONO
+    usecase "Ver historial\nde abonos" as UC_LIST_ABONO
+  }
+
+  ' ── Inventario ──
+  package "Gestión de Inventario" {
+    usecase "Registrar producto" as UC_CREATE_PROD
+    usecase "Editar producto" as UC_EDIT_PROD
+    usecase "Eliminar producto" as UC_DELETE_PROD
+    usecase "Buscar producto" as UC_SEARCH_PROD
+    usecase "Crear categoría" as UC_CREATE_CAT
+    usecase "Editar categoría" as UC_EDIT_CAT
+    usecase "Eliminar categoría" as UC_DELETE_CAT
+  }
+
+  ' ── Dashboard ──
+  package "Dashboard / Reportes" {
+    usecase "Ver métricas\n(fiados, recaudo,\nclientes, inventario)" as UC_DASHBOARD
+    usecase "Ver historial\nde recaudo\n(libro de caja)" as UC_HISTORIAL
+    usecase "Ver últimas\ntransacciones" as UC_TRANS
+  }
+
+  ' ── Configuración ──
+  package "Configuración" {
+    usecase "Cambiar tema\n(oscuro/claro)" as UC_THEME
+  }
+}
+
+' ── Relaciones del Usuario ──
+USER --> UC_LOGIN
+USER --> UC_LOGOUT
+USER --> UC_CREATE_CLI
+USER --> UC_EDIT_CLI
+USER --> UC_DELETE_CLI
+USER --> UC_SEARCH_CLI
+USER --> UC_LIST_CLI
+USER --> UC_CREATE_PREST
+USER --> UC_EDIT_PREST
+USER --> UC_DELETE_PREST
+USER --> UC_DEVOLVER
+USER --> UC_CREATE_ABONO
+USER --> UC_DELETE_ABONO
+USER --> UC_LIST_ABONO
+USER --> UC_CREATE_PROD
+USER --> UC_EDIT_PROD
+USER --> UC_DELETE_PROD
+USER --> UC_SEARCH_PROD
+USER --> UC_CREATE_CAT
+USER --> UC_EDIT_CAT
+USER --> UC_DELETE_CAT
+USER --> UC_DASHBOARD
+USER --> UC_HISTORIAL
+USER --> UC_TRANS
+USER --> UC_THEME
+
+' ── Includes / Extends ──
+UC_CREATE_PREST ..> UC_SELECT_PROD : <<include>>
+UC_CREATE_PREST ..> UC_MANUAL_PROD : <<extend>>
+UC_CREATE_PREST ..> UC_ABONO_INI : <<extend>>
+
+' ── Relaciones con Supabase ──
+UC_LOGIN --> SUPA : Autenticación\nOTP / JWT
+UC_CREATE_CLI --> SUPA : INSERT con RLS
+UC_CREATE_PREST --> SUPA : INSERT + descuento\nde stock
+UC_CREATE_ABONO --> SUPA : INSERT + trigger\nauto-estado
+UC_DEVOLVER --> SUPA : UPDATE estado\n+ restaurar stock
+UC_DASHBOARD --> SUPA : SELECT\nagregaciones
+
+@enduml

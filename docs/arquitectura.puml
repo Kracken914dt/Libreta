@@ -1,0 +1,82 @@
+@startuml Arquitectura_La_Libreta
+
+title Diagrama de Arquitectura de Software — La Libreta Digital
+
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam databaseStyle rectangle
+
+skinparam component {
+  BackgroundColor #EDE9FE
+  BorderColor #7C3AED
+  FontColor #1E293B
+  ArrowColor #7C3AED
+}
+
+skinparam node {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+}
+
+skinparam database {
+  BackgroundColor #ECFDF5
+  BorderColor #10B981
+  FontColor #064E3B
+}
+
+node "Dispositivo del Usuario (Navegador)" as ClientNode {
+  package "Frontend (React SPA)" {
+    component [Vite Dev Server / Bundler] as Vite
+    component [main.jsx] as Entry
+    component [App.jsx (Layout & Nav)] as App
+    component [AppContext.jsx (Context & State)] as Context
+    component [Components] as Comp
+    component [validation.js] as Validation
+    
+    Entry -> App
+    App -> Context : "Consume"
+    Comp -> Context : "Consume & Dispara Acciones"
+    App -> Comp : "Renderiza Vistas"
+    Comp -> Validation : "Aplica validaciones"
+  }
+}
+
+node "Infraestructura Supabase (BaaS)" as SupaNode {
+  component [Supabase Auth API] as AuthAPI
+  component [PostgREST API (CRUD Auto)] as REST_API
+  
+  database "PostgreSQL Database" as DB {
+    folder "Tablas de Negocio" {
+      [clientes] as T_Clientes
+      [prestamos] as T_Prestamos
+      [abonos] as T_Abonos
+      [productos] as T_Productos
+      [categorias_productos] as T_Categorias
+    }
+    folder "Tabla de Seguridad" {
+      [usuarios] as T_Usuarios
+    }
+    folder "Lógica de Base de Datos" {
+      [Recalcular Estado Trigger] as Trigger
+      [Row Level Security (RLS) Policies] as RLS
+    }
+  }
+}
+
+' Relaciones entre Cliente y Backend
+Context ──► AuthAPI : "Registro / Magic Link Login (HTTPS)"
+Context ──► REST_API : "Llamadas CRUD Seguras (Axios/Fetch con JWT Bearer)"
+
+' Relaciones internas de Supabase
+AuthAPI ──► T_Usuarios : "Crea perfil de usuario (via PostgreSQL Trigger)"
+REST_API ──► RLS : "Filtra peticiones por usuario asignado"
+RLS ──► T_Clientes : "Evalúa permisos por fila"
+RLS ──► T_Prestamos
+RLS ──► T_Abonos
+RLS ──► T_Productos
+RLS ──► T_Categorias
+
+T_Abonos ──► Trigger : "Al insertar/actualizar/borrar"
+Trigger ──► T_Prestamos : "Modifica estado automáticamente"
+
+@enduml
