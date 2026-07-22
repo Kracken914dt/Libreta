@@ -9,7 +9,8 @@ import {
   ArrowDownLeft, 
   PlusCircle, 
   UserPlus, 
-  FileText 
+  FileText,
+  X 
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNewCliente, setOpenNewAbono }) {
@@ -36,9 +37,61 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
     });
   };
 
+  const [showRecaudoModal, setShowRecaudoModal] = React.useState(false);
+
+  // Formateador de fecha completa para el modal
+  const formatFullDate = (isoString) => {
+    if (!isoString) return 'Sin fecha';
+    const date = new Date(isoString);
+    return date.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Cálculos de métricas
   const totalFiado = prestamos.reduce((sum, p) => sum + p.precio_total, 0);
-  const totalCobrado = abonos.reduce((sum, a) => sum + a.monto, 0);
+
+  // Construcción del libro diario / historial de transacciones de caja (Ingresos y Egresos por Devolución)
+  const transaccionesRecaudo = [];
+  
+  abonos.forEach(a => {
+    const prestamo = prestamos.find(p => p.id === a.prestamo_id);
+    const cliente = prestamo ? clientes.find(c => c.id === prestamo.cliente_id) : null;
+    
+    // Todo abono registrado inicialmente es un ingreso
+    transaccionesRecaudo.push({
+      id: `in_${a.id}`,
+      fecha: a.fecha_abono,
+      cliente: cliente?.nombre || 'Cliente Desconocido',
+      producto: prestamo?.producto || 'Desconocido',
+      tipo: 'Abono',
+      monto: a.monto,
+      esIngreso: true
+    });
+
+    // Si el préstamo correspondiente fue devuelto, se anula contablemente mediante un reembolso/egreso
+    if (prestamo && prestamo.estado === 'devuelto') {
+      transaccionesRecaudo.push({
+        id: `out_${a.id}`,
+        fecha: prestamo.updated_at || a.fecha_abono, // usará la fecha de actualización del préstamo (cuando se devolvió)
+        cliente: cliente?.nombre || 'Cliente Desconocido',
+        producto: `${prestamo.producto} (Devolución)`,
+        tipo: 'Devuelto (Reembolso)',
+        monto: -a.monto,
+        esIngreso: false
+      });
+    }
+  });
+
+  // Ordenar de más reciente a más antiguo
+  transaccionesRecaudo.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  // El Total Cobrado Neto es la suma de todo este historial (los abonos a préstamos devueltos se anulan a cero netos)
+  const totalCobradoNeto = transaccionesRecaudo.reduce((sum, t) => sum + t.monto, 0);
   
   // Calcular saldo pendiente detallado (sólo préstamos pendientes)
   let totalPendiente = 0;
@@ -152,18 +205,23 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
         </div>
 
         {/* Total Cobrado */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-teal-950/20 group">
+        <div 
+          onClick={() => setShowRecaudoModal(true)}
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-teal-950/20 hover:border-teal-500/50 cursor-pointer group"
+          title="Click para ver historial detallado"
+        >
           <div className="absolute top-0 right-0 w-32 h-32 bg-teal-600/5 dark:bg-teal-600/10 rounded-full blur-2xl group-hover:bg-teal-600/15 dark:group-hover:bg-teal-600/20 transition-all duration-300"></div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-teal-600/80 dark:text-teal-300/80">Total Recaudado</span>
-            <div className="p-2 bg-teal-500/10 rounded-xl border border-teal-500/20 text-teal-600 dark:text-teal-400">
+            <div className="p-2 bg-teal-500/10 rounded-xl border border-teal-500/20 text-teal-600 dark:text-teal-400 animate-pulse">
               <TrendingUp size={20} />
             </div>
           </div>
           <div className="mt-4">
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{formatCurrency(totalCobrado)}</h3>
-            <div className="flex items-center gap-1 mt-2 text-xs text-slate-500 dark:text-teal-300/60">
-              <span>Recaudado acumulado en abonos</span>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{formatCurrency(totalCobradoNeto)}</h3>
+            <div className="flex items-center justify-between gap-1 mt-2 text-xs text-slate-500 dark:text-teal-300/60">
+              <span>Recaudado neto en caja</span>
+              <span className="text-[10px] bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold px-2 py-0.5 rounded border border-teal-500/25">Ver detalle</span>
             </div>
           </div>
         </div>
@@ -317,6 +375,91 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
           </div>
         </div>
       </div>
+      {/* Modal de Historial de Recaudo */}
+      {showRecaudoModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl p-6 relative animate-slide-up max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-slate-150 dark:border-slate-850">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <TrendingUp size={20} className="text-teal-500" />
+                  Historial de Recaudo y Movimientos
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Registro de ingresos por abonos y egresos por devoluciones de productos.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowRecaudoModal(false)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-650 dark:hover:text-white transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Listado / Tabla */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-2.5 pr-1">
+              {transaccionesRecaudo.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 dark:text-slate-550 text-sm">
+                  No hay transacciones registradas de recaudo.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">
+                        <th className="py-2.5 px-3">Fecha</th>
+                        <th className="py-2.5 px-3">Cliente</th>
+                        <th className="py-2.5 px-3">Detalle</th>
+                        <th className="py-2.5 px-3 text-center">Tipo</th>
+                        <th className="py-2.5 px-3 text-right">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                      {transaccionesRecaudo.map((t) => (
+                        <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
+                          <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                            {formatFullDate(t.fecha)}
+                          </td>
+                          <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">
+                            {t.cliente}
+                          </td>
+                          <td className="py-3 px-3 text-slate-650 dark:text-slate-350 max-w-[300px] truncate" title={t.producto}>
+                            {t.producto}
+                          </td>
+                          <td className="py-3 px-3 text-center whitespace-nowrap">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                              t.esIngreso
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                            }`}>
+                              {t.tipo}
+                            </span>
+                          </td>
+                          <td className={`py-3 px-3 text-right font-bold whitespace-nowrap ${
+                            t.esIngreso ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                          }`}>
+                            {t.esIngreso ? '+' : ''}{formatCurrency(t.monto)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Footer con el balance neto */}
+            <div className="pt-4 border-t border-slate-150 dark:border-slate-850 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20 p-4 rounded-2xl">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Total Neto en Caja:</span>
+              <span className="text-lg font-black text-slate-950 dark:text-white tracking-tight">
+                {formatCurrency(totalCobradoNeto)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
