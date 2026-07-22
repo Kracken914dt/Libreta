@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Package, Image as ImageIcon } from 'lucide-react';
+import { 
+  handleNumberKeyDown, 
+  formatNameInput, 
+  formatMontoInput 
+} from '../utils/validation';
 
 export default function EditProductoModal({ isOpen, onClose, producto }) {
   const { categorias, addProducto, updateProducto, showAlert } = useApp();
@@ -95,7 +100,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
               required
               placeholder="Ej. Zapatos Nike Air, Camisa Polo Azul"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => setNombre(formatNameInput(e.target.value))}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
             />
           </div>
@@ -127,7 +132,8 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 min="0"
                 placeholder="Ej. 120000"
                 value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
+                onChange={(e) => setPrecio(formatMontoInput(e.target.value))}
+                onKeyDown={handleNumberKeyDown}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
               />
             </div>
@@ -139,7 +145,8 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 min="0"
                 placeholder="Ej. 10"
                 value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                onChange={(e) => setStock(formatMontoInput(e.target.value))}
+                onKeyDown={handleNumberKeyDown}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
               />
             </div>
@@ -177,9 +184,10 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
 
           {/* Descripción */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Descripción (Opcional)</label>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Descripción (Máx. 100 caracteres)</label>
             <textarea 
               placeholder="Detalles sobre tallas, colores o especificaciones del producto..."
+              maxLength={100}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs h-20 resize-none"

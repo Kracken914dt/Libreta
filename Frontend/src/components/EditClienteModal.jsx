@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, User, Edit3 } from 'lucide-react';
+import { 
+  handleNumberKeyDown, 
+  formatNameInput, 
+  formatDigitsInput 
+} from '../utils/validation';
 
 export default function EditClienteModal({ isOpen, onClose, cliente }) {
   const { updateCliente, showAlert } = useApp();
@@ -22,6 +27,16 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre.trim()) return;
+
+    if (cedula && (cedula.length < 7 || cedula.length > 10)) {
+      showAlert('La cédula debe tener entre 7 y 10 dígitos.', 'Cédula inválida', 'warning');
+      return;
+    }
+
+    if (telefono && telefono.length !== 10) {
+      showAlert('El número de celular debe tener exactamente 10 dígitos.', 'Celular inválido', 'warning');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -64,7 +79,7 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
               required
               placeholder="Ej. Juan Pérez"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => setNombre(formatNameInput(e.target.value))}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
             />
           </div>
@@ -76,7 +91,8 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
                 type="text" 
                 placeholder="Ej. 1023456"
                 value={cedula}
-                onChange={(e) => setCedula(e.target.value)}
+                onChange={(e) => setCedula(formatDigitsInput(e.target.value, 10))}
+                onKeyDown={handleNumberKeyDown}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
               />
             </div>
@@ -86,7 +102,8 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
                 type="text" 
                 placeholder="Ej. 3124567890"
                 value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
+                onChange={(e) => setTelefono(formatDigitsInput(e.target.value, 10))}
+                onKeyDown={handleNumberKeyDown}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
               />
             </div>

@@ -90,12 +90,36 @@ export const AppProvider = ({ children }) => {
       if (supabase) {
         // Obtener sesión inicial
         supabase.auth.getSession().then(({ data: { session } }) => {
-          setUser(session?.user ?? null);
+          const currentUser = session?.user ?? null;
+          setUser(prevUser => {
+            if (prevUser?.id === currentUser?.id) return prevUser;
+            return currentUser;
+          });
+          if (!currentUser) {
+            // Limpiar datos al no haber sesión
+            setClientes([]);
+            setPrestamos([]);
+            setAbonos([]);
+            setCategorias([]);
+            setProductos([]);
+          }
         });
 
         // Escuchar cambios
         const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user ?? null);
+          const currentUser = session?.user ?? null;
+          setUser(prevUser => {
+            if (prevUser?.id === currentUser?.id) return prevUser;
+            return currentUser;
+          });
+          if (!currentUser) {
+            // Limpiar datos en logout o sesión expirada
+            setClientes([]);
+            setPrestamos([]);
+            setAbonos([]);
+            setCategorias([]);
+            setProductos([]);
+          }
         });
         subscription = data.subscription;
       }
@@ -110,11 +134,25 @@ export const AppProvider = ({ children }) => {
 
   // Cargar datos
   const loadData = async () => {
-    setLoading(true);
+    const isFirstLoad = clientes.length === 0 && prestamos.length === 0;
+    if (isFirstLoad) {
+      setLoading(true);
+    }
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
       if (!supabase) {
         setMode('demo');
+        setLoading(false);
+        return;
+      }
+
+      // Si estamos en Supabase pero no hay usuario autenticado, vaciamos el estado local y detenemos
+      if (!user) {
+        setClientes([]);
+        setPrestamos([]);
+        setAbonos([]);
+        setCategorias([]);
+        setProductos([]);
         setLoading(false);
         return;
       }
@@ -213,7 +251,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     loadData();
-  }, [mode]);
+  }, [mode, user]);
 
   useEffect(() => {
     if (mode === 'demo' && !loading) {
@@ -279,6 +317,11 @@ export const AppProvider = ({ children }) => {
       }
     }
     setUser(null);
+    setClientes([]);
+    setPrestamos([]);
+    setAbonos([]);
+    setCategorias([]);
+    setProductos([]);
   };
 
   // =========================================================================

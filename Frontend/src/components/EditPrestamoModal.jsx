@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Edit3 } from 'lucide-react';
+import { 
+  handleNumberKeyDown, 
+  formatMontoInput 
+} from '../utils/validation';
 
 export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
   const { clientes, updatePrestamo, showAlert } = useApp();
@@ -101,7 +105,8 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
               min="0"
               placeholder="Ej. 120000"
               value={precioTotal}
-              onChange={(e) => setPrecioTotal(e.target.value)}
+              onChange={(e) => setPrecioTotal(formatMontoInput(e.target.value))}
+              onKeyDown={handleNumberKeyDown}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
             />
           </div>
@@ -142,9 +147,10 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
 
           {/* Notas */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Notas / Detalles adicionales</label>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Notas / Detalles adicionales (Máx. 100 caracteres)</label>
             <textarea 
               placeholder="Ej. Talla 38, Color azul, etc."
+              maxLength={100}
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs h-20 resize-none"

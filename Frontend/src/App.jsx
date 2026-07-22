@@ -13,6 +13,12 @@ import EditProductoModal from './components/EditProductoModal';
 import EditCategoriaModal from './components/EditCategoriaModal';
 import AlertModal from './components/AlertModal';
 import { 
+  handleNumberKeyDown, 
+  formatNameInput, 
+  formatDigitsInput, 
+  formatMontoInput 
+} from './utils/validation';
+import { 
   LayoutDashboard, 
   Users, 
   DollarSign, 
@@ -246,6 +252,16 @@ function AppContent() {
     e.preventDefault();
     if (!newClienteData.nombre.trim()) return;
 
+    if (newClienteData.cedula && (newClienteData.cedula.length < 7 || newClienteData.cedula.length > 10)) {
+      showAlert('La cédula debe tener entre 7 y 10 dígitos.', 'Cédula inválida', 'warning');
+      return;
+    }
+
+    if (newClienteData.telefono && newClienteData.telefono.length !== 10) {
+      showAlert('El número de celular debe tener exactamente 10 dígitos.', 'Celular inválido', 'warning');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await addCliente(newClienteData);
@@ -411,7 +427,6 @@ function AppContent() {
           </div>
           <div>
             <h1 className="font-bold text-slate-900 dark:text-white leading-none text-base">La Libreta</h1>
-            <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Roberto Gómez</span>
           </div>
         </div>
 
@@ -744,7 +759,7 @@ function AppContent() {
                   required
                   placeholder="Ej. Juan Pérez"
                   value={newClienteData.nombre}
-                  onChange={(e) => setNewClienteData(prev => ({ ...prev, nombre: e.target.value }))}
+                  onChange={(e) => setNewClienteData(prev => ({ ...prev, nombre: formatNameInput(e.target.value) }))}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                 />
               </div>
@@ -756,7 +771,8 @@ function AppContent() {
                     type="text" 
                     placeholder="Ej. 1023456"
                     value={newClienteData.cedula}
-                    onChange={(e) => setNewClienteData(prev => ({ ...prev, cedula: e.target.value }))}
+                    onChange={(e) => setNewClienteData(prev => ({ ...prev, cedula: formatDigitsInput(e.target.value, 10) }))}
+                    onKeyDown={handleNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                   />
                 </div>
@@ -766,7 +782,8 @@ function AppContent() {
                     type="text" 
                     placeholder="Ej. 3124567890"
                     value={newClienteData.telefono}
-                    onChange={(e) => setNewClienteData(prev => ({ ...prev, telefono: e.target.value }))}
+                    onChange={(e) => setNewClienteData(prev => ({ ...prev, telefono: formatDigitsInput(e.target.value, 10) }))}
+                    onKeyDown={handleNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                   />
                 </div>
@@ -917,6 +934,7 @@ function AppContent() {
                       min="1"
                       value={currentQty}
                       onChange={(e) => setCurrentQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      onKeyDown={handleNumberKeyDown}
                       className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                     />
                   </div>
@@ -930,7 +948,7 @@ function AppContent() {
                         type="text" 
                         placeholder="Ej. Reparación, etc."
                         value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
+                        onChange={(e) => setCustomName(formatNameInput(e.target.value))}
                         className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                       />
                     </div>
@@ -941,7 +959,8 @@ function AppContent() {
                         min="0"
                         placeholder="Ej. 120000"
                         value={customPrice}
-                        onChange={(e) => setCustomPrice(e.target.value)}
+                        onChange={(e) => setCustomPrice(formatMontoInput(e.target.value))}
+                        onKeyDown={handleNumberKeyDown}
                         className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                       />
                     </div>
@@ -977,7 +996,8 @@ function AppContent() {
                     min="0"
                     placeholder="Ej. 20000"
                     value={newPrestamoData.abono_inicial}
-                    onChange={(e) => setNewPrestamoData(prev => ({ ...prev, abono_inicial: e.target.value }))}
+                    onChange={(e) => setNewPrestamoData(prev => ({ ...prev, abono_inicial: formatMontoInput(e.target.value) }))}
+                    onKeyDown={handleNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-650 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                   />
                 </div>
@@ -1019,9 +1039,10 @@ function AppContent() {
 
               {/* Notas */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Notas / Detalles adicionales</label>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Notas / Detalles adicionales (Máx. 100 caracteres)</label>
                 <textarea 
                   placeholder="Ej. Talla 38, Color azul, etc."
+                  maxLength={100}
                   value={newPrestamoData.notas}
                   onChange={(e) => setNewPrestamoData(prev => ({ ...prev, notas: e.target.value }))}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs h-20 resize-none"
@@ -1096,7 +1117,7 @@ function AppContent() {
                 )}
               </div>
 
-              {/* Monto */}
+              {/* Cantidad Abono */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Monto del Abono ($) *</label>
                 <input 
@@ -1105,7 +1126,8 @@ function AppContent() {
                   min="1"
                   placeholder="Ej. 30000"
                   value={newAbonoData.monto}
-                  onChange={(e) => setNewAbonoData(prev => ({ ...prev, monto: e.target.value }))}
+                  onChange={(e) => setNewAbonoData(prev => ({ ...prev, monto: formatMontoInput(e.target.value) }))}
+                  onKeyDown={handleNumberKeyDown}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                 />
               </div>
@@ -1124,9 +1146,10 @@ function AppContent() {
 
               {/* Notas */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Detalles / Notas (Opcional)</label>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Detalles / Notas (Máx. 100 caracteres)</label>
                 <input 
                   type="text" 
+                  maxLength={100}
                   placeholder="Ej. Pagó en efectivo, transferencia bancaria, etc."
                   value={newAbonoData.notas}
                   onChange={(e) => setNewAbonoData(prev => ({ ...prev, notas: e.target.value }))}

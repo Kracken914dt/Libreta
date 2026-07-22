@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Tag } from 'lucide-react';
+import { formatNameInput } from '../utils/validation';
 
 const PRESETS_COLORS = [
   '#8b5cf6', // Violeta
@@ -88,7 +89,7 @@ export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
               required
               placeholder="Ej. Ropa de Invierno, Calzado Deportivo"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => setNombre(formatNameInput(e.target.value))}
               className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
             />
           </div>
