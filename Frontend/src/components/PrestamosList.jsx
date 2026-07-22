@@ -11,7 +11,8 @@ import {
   Clock, 
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 
 export default function PrestamosList({ 
@@ -22,7 +23,7 @@ export default function PrestamosList({
   onRequestDeletePrestamo,
   onRequestDeleteAbono
 }) {
-  const { clientes, prestamos, abonos, loading } = useApp();
+  const { clientes, prestamos, abonos, devolverPrestamo, showConfirm, loading } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('pendientes'); // 'todos', 'pendientes', 'pagados'
   const [expandedPrestamoId, setExpandedPrestamoId] = useState(null);
@@ -76,6 +77,8 @@ export default function PrestamosList({
       return matchesSearch && p.estado === 'pendiente';
     } else if (activeFilter === 'pagados') {
       return matchesSearch && p.estado === 'pagado';
+    } else if (activeFilter === 'devueltos') {
+      return matchesSearch && p.estado === 'devuelto';
     }
     return matchesSearch; // 'todos'
   });
@@ -136,6 +139,16 @@ export default function PrestamosList({
             Pagados
           </button>
           <button
+            onClick={() => setActiveFilter('devueltos')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activeFilter === 'devueltos'
+                ? 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Devueltos
+          </button>
+          <button
             onClick={() => setActiveFilter('todos')}
             className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeFilter === 'todos'
@@ -180,9 +193,11 @@ export default function PrestamosList({
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                         prestamo.estado === 'pagado'
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                          : prestamo.estado === 'devuelto'
+                            ? 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20'
+                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
                       }`}>
-                        {prestamo.estado === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
+                        {prestamo.estado === 'pagado' ? 'PAGADO' : prestamo.estado === 'devuelto' ? 'DEVUELTO' : 'PENDIENTE'}
                       </span>
                       <span className="text-slate-400 dark:text-slate-500 text-xs flex items-center gap-1">
                         <Clock size={12} />
@@ -218,7 +233,6 @@ export default function PrestamosList({
                     </div>
                   </div>
 
-                  {/* Acciones de la Tarjeta */}
                   <div className="flex items-center gap-2 self-end lg:self-auto shrink-0">
                     {prestamo.estado === 'pendiente' && (
                       <button 
@@ -233,14 +247,33 @@ export default function PrestamosList({
                       </button>
                     )}
 
+                    {prestamo.estado !== 'devuelto' && (
+                      <button 
+                        onClick={() => {
+                          showConfirm(
+                            `¿Estás seguro de registrar la devolución de este préstamo?\n\nDetalle: ${prestamo.producto}\n\nEsto restaurará el stock de los productos correspondientes en el inventario.`,
+                            'Confirmar Devolución',
+                            () => devolverPrestamo(prestamo.id)
+                          );
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg border border-slate-250 dark:border-slate-850 shadow-sm transition-all"
+                        title="Registrar devolución de productos"
+                      >
+                        <RotateCcw size={14} />
+                        Devolver
+                      </button>
+                    )}
+
                     {/* Botón Editar */}
-                    <button 
-                      onClick={() => onEditPrestamo(prestamo)}
-                      title="Editar Préstamo"
-                      className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 transition-all"
-                    >
-                      <Edit3 size={14} />
-                    </button>
+                    {prestamo.estado !== 'devuelto' && (
+                      <button 
+                        onClick={() => onEditPrestamo(prestamo)}
+                        title="Editar Préstamo"
+                        className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 transition-all"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                    )}
 
                     {/* Botón Eliminar */}
                     <button 
@@ -275,6 +308,22 @@ export default function PrestamosList({
                         <div className="bg-slate-100/40 dark:bg-slate-900/40 p-3 rounded-lg border border-slate-200/50 dark:border-slate-800/50">
                           <span className="font-bold text-slate-500 dark:text-slate-400 block mb-1">📝 Notas Adicionales:</span>
                           <p className="italic">{prestamo.notes || prestamo.notas}</p>
+                        </div>
+                      )}
+                      {prestamo.productos_fiados && (
+                        <div className="bg-slate-100/40 dark:bg-slate-900/40 p-3 rounded-lg border border-slate-200/50 dark:border-slate-800/50 md:col-span-2">
+                          <span className="font-bold text-slate-500 dark:text-slate-400 block mb-1">📦 Desglose de Productos Fiados:</span>
+                          <div className="mt-2 space-y-1.5">
+                            {(Array.isArray(prestamo.productos_fiados)
+                              ? prestamo.productos_fiados
+                              : (typeof prestamo.productos_fiados === 'string' ? JSON.parse(prestamo.productos_fiados) : [])
+                            ).map((p, idx) => (
+                              <div key={idx} className="flex justify-between items-center py-1 border-b border-slate-200/30 dark:border-slate-800/40 last:border-0 last:pb-0 text-slate-650 dark:text-slate-350">
+                                <span>{p.cantidad}x <strong className="text-slate-800 dark:text-slate-200 font-semibold">{p.nombre}</strong></span>
+                                <span>Unitario: {formatCurrency(p.precio)} | Subtotal: {formatCurrency(p.precio * p.cantidad)}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { X, Package, Image as ImageIcon } from 'lucide-react';
 
 export default function EditProductoModal({ isOpen, onClose, producto }) {
-  const { categorias, addProducto, updateProducto } = useApp();
+  const { categorias, addProducto, updateProducto, showAlert } = useApp();
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
@@ -54,7 +54,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       }
       onClose();
     } catch (err) {
-      alert('Error al guardar producto: ' + err.message);
+      showAlert('Error al guardar producto: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
     }

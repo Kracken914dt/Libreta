@@ -58,6 +58,21 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isConfigured, setIsConfigured] = useState(isSupabaseConfigured());
   
+  // Custom Alerts / Confirms
+  const [alertConfig, setAlertConfig] = useState(null);
+
+  const showAlert = (message, title = 'Alerta', type = 'warning') => {
+    setAlertConfig({ title, message, type });
+  };
+
+  const showConfirm = (message, title = 'Confirmar', onConfirm) => {
+    setAlertConfig({ title, message, type: 'confirm', onConfirm });
+  };
+
+  const closeAlert = () => {
+    setAlertConfig(null);
+  };
+  
   // Estado de Usuario Autenticado en Supabase
   const [user, setUser] = useState(null);
 
@@ -211,7 +226,7 @@ export const AppProvider = ({ children }) => {
         setMode('supabase');
         localStorage.setItem('app_mode', 'supabase');
       } else {
-        alert('Supabase no está configurado. Por favor, configúralo primero.');
+        showAlert('Supabase no está configurado. Por favor, configúralo primero.', 'Configuración requerida', 'warning');
       }
     } else {
       setMode('demo');
@@ -330,15 +345,19 @@ export const AppProvider = ({ children }) => {
   // =========================================================================
   // ACCIONES: PRÉSTAMOS
   // =========================================================================
-  const addPrestamo = async ({ cliente_id, producto, precio_total, dias_pago_sugeridos, notas, fecha_prestamo, abono_inicial, producto_id }) => {
-    const totalAmount = parseFloat(precio_total);
+  const addPrestamo = async ({ cliente_id, productos_seleccionados, dias_pago_sugeridos, notas, fecha_prestamo, abono_inicial }) => {
+    const totalAmount = productos_seleccionados.reduce((sum, p) => sum + (parseFloat(p.precio) * parseInt(p.cantidad)), 0);
     const initialAbonoAmount = abono_inicial ? parseFloat(abono_inicial) : 0;
     const estado = initialAbonoAmount >= totalAmount ? 'pagado' : 'pendiente';
     const fecha = fecha_prestamo ? new Date(fecha_prestamo).toISOString() : new Date().toISOString();
 
-    // Descontar stock si se seleccionó un producto del inventario
-    if (producto_id) {
-      await updateProductoStock(producto_id, -1);
+    const productoString = productos_seleccionados.map(p => `${p.cantidad}x ${p.nombre}`).join(', ');
+
+    // Descontar stock para cada producto de inventario
+    for (const p of productos_seleccionados) {
+      if (p.id) {
+        await updateProductoStock(p.id, -p.cantidad);
+      }
     }
 
     if (mode === 'supabase') {
@@ -347,31 +366,18 @@ export const AppProvider = ({ children }) => {
         .from('prestamos')
         .insert([{
           cliente_id,
-          producto,
+          producto: productoString,
           precio_total: totalAmount,
           fecha_prestamo: fecha,
           estado,
           dias_pago_sugeridos,
-          notas
+          notas,
+          productos_fiados: productos_seleccionados
         }])
         .select();
 
       if (pError) {
-        const { data: prestamoDataRetry, error: pRetryError } = await supabase
-          .from('prestamos')
-          .insert([{
-            cliente_id,
-            producto,
-            precio_total: totalAmount,
-            fecha_prestamo: fecha,
-            estado,
-            dias_pago_sugeridos,
-            notas
-          }])
-          .select();
-        
-        if (pRetryError) throw pRetryError;
-        return finishCreatePrestamo(prestamoDataRetry[0]);
+        throw pError;
       }
 
       return finishCreatePrestamo(prestamoData[0]);
@@ -412,12 +418,13 @@ export const AppProvider = ({ children }) => {
       const nuevoPrestamo = {
         id: nuevoPrestamoId,
         cliente_id,
-        producto,
+        producto: productoString,
         precio_total: totalAmount,
         fecha_prestamo: fecha,
         estado,
         dias_pago_sugeridos,
         notas,
+        productos_fiados: productos_seleccionados,
         created_at: new Date().toISOString()
       };
 
@@ -436,6 +443,38 @@ export const AppProvider = ({ children }) => {
 
       setPrestamos(prev => [nuevoPrestamo, ...prev]);
       return nuevoPrestamo;
+    }
+  };
+
+  const devolverPrestamo = async (id) => {
+    const prestamo = prestamos.find(p => p.id === id);
+    if (!prestamo) return;
+
+    const prodsFiados = Array.isArray(prestamo.productos_fiados)
+      ? prestamo.productos_fiados
+      : (typeof prestamo.productos_fiados === 'string' ? JSON.parse(prestamo.productos_fiados) : []);
+
+    // Restaurar stock
+    for (const p of prodsFiados) {
+      if (p.id) {
+        await updateProductoStock(p.id, p.cantidad);
+      }
+    }
+
+    if (mode === 'supabase') {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from('prestamos')
+        .update({ estado: 'devuelto' })
+        .eq('id', id)
+        .select();
+
+      if (error) throw error;
+      setPrestamos(prev => prev.map(p => p.id === id ? data[0] : p));
+      return data[0];
+    } else {
+      setPrestamos(prev => prev.map(p => p.id === id ? { ...p, estado: 'devuelto' } : p));
+      return { ...prestamo, estado: 'devuelto' };
     }
   };
 
@@ -741,6 +780,7 @@ export const AppProvider = ({ children }) => {
       updateCliente,
       deleteCliente,
       addPrestamo,
+      devolverPrestamo,
       updatePrestamo,
       deletePrestamo,
       addAbono,
@@ -754,7 +794,11 @@ export const AppProvider = ({ children }) => {
       loadData,
       user,
       loginWithGoogle,
-      logout
+      logout,
+      alertConfig,
+      showAlert,
+      showConfirm,
+      closeAlert
     }}>
       {children}
     </AppContext.Provider>

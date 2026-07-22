@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { X, User, Edit3 } from 'lucide-react';
 
 export default function EditClienteModal({ isOpen, onClose, cliente }) {
-  const { updateCliente } = useApp();
+  const { updateCliente, showAlert } = useApp();
   const [nombre, setNombre] = useState('');
   const [cedula, setCedula] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -28,7 +28,7 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
       await updateCliente(cliente.id, { nombre, cedula, telefono });
       onClose();
     } catch (err) {
-      alert('Error al actualizar cliente: ' + err.message);
+      showAlert('Error al actualizar cliente: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
     }

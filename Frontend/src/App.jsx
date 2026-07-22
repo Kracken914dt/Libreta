@@ -11,7 +11,7 @@ import LoginScreen from './components/LoginScreen';
 import ProductosList from './components/ProductosList';
 import EditProductoModal from './components/EditProductoModal';
 import EditCategoriaModal from './components/EditCategoriaModal';
-import confetti from 'canvas-confetti';
+import AlertModal from './components/AlertModal';
 import { 
   LayoutDashboard, 
   Users, 
@@ -25,7 +25,8 @@ import {
   Moon,
   LogOut,
   UserCheck,
-  Package
+  Package,
+  Trash2
 } from 'lucide-react';
 
 function AppContent() {
@@ -47,7 +48,10 @@ function AppContent() {
     isConfigured,
     user,
     logout,
-    loading
+    loading,
+    alertConfig,
+    showAlert,
+    closeAlert
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -89,6 +93,17 @@ function AppContent() {
   const [selectedClienteForPrestamo, setSelectedClienteForPrestamo] = useState(null);
   const [selectedPrestamoForAbono, setSelectedPrestamoForAbono] = useState(null);
 
+  // Helper: generar fecha/hora local en formato YYYY-MM-DDTHH:MM
+  const getLocalDateTimeString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   // Datos de formularios
   const [newClienteData, setNewClienteData] = useState({ nombre: '', cedula: '', telefono: '' });
   const [newPrestamoData, setNewPrestamoData] = useState({
@@ -98,25 +113,29 @@ function AppContent() {
     abono_inicial: '',
     dias_pago_sugeridos: '',
     notas: '',
-    fecha_prestamo: new Date().toISOString().substring(0, 16)
+    fecha_prestamo: getLocalDateTimeString()
   });
   const [newAbonoData, setNewAbonoData] = useState({
     prestamo_id: '',
     monto: '',
     notas: '',
-    fecha_abono: new Date().toISOString().substring(0, 16)
+    fecha_abono: getLocalDateTimeString()
   });
 
   const [submitting, setSubmitting] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [isCustomProduct, setIsCustomProduct] = useState(false);
+  const [productosAgregados, setProductosAgregados] = useState([]);
+  const [currentQty, setCurrentQty] = useState(1);
+  const [customName, setCustomName] = useState('');
+  const [customPrice, setCustomPrice] = useState('');
 
   // Pre-llenar fecha y hora actual en modales al abrirse
   useEffect(() => {
     if (openNewPrestamo) {
       setNewPrestamoData(prev => ({
         ...prev,
-        fecha_prestamo: new Date().toISOString().substring(0, 16)
+        fecha_prestamo: getLocalDateTimeString()
       }));
     }
   }, [openNewPrestamo]);
@@ -125,7 +144,7 @@ function AppContent() {
     if (openNewAbono) {
       setNewAbonoData(prev => ({
         ...prev,
-        fecha_abono: new Date().toISOString().substring(0, 16)
+        fecha_abono: getLocalDateTimeString()
       }));
     }
   }, [openNewAbono]);
@@ -216,7 +235,7 @@ function AppContent() {
         await deleteCategoria(data.id);
       }
     } catch (err) {
-      alert(`Error al eliminar: ${err.message}`);
+      showAlert(`Error al eliminar: ${err.message}`, 'Error', 'error');
     } finally {
       setDeleteTarget(null);
     }
@@ -232,11 +251,61 @@ function AppContent() {
       await addCliente(newClienteData);
       setNewClienteData({ nombre: '', cedula: '', telefono: '' });
       setOpenNewCliente(false);
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
     } catch (err) {
-      alert('Error al crear cliente: ' + err.message);
+      showAlert('Error al crear cliente: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Agregar un producto temporalmente al carrito de fiados
+  const handleAgregarProducto = (e) => {
+    e.preventDefault();
+    if (isCustomProduct) {
+      if (!customName.trim() || !customPrice) {
+        showAlert('Por favor especifica el nombre y precio del producto.', 'Campos incompletos', 'warning');
+        return;
+      }
+      const newItem = {
+        id: null,
+        nombre: customName,
+        cantidad: parseInt(currentQty) || 1,
+        precio: parseFloat(customPrice)
+      };
+      setProductosAgregados(prev => [...prev, newItem]);
+      setCustomName('');
+      setCustomPrice('');
+      setCurrentQty(1);
+    } else {
+      if (!selectedProductId) {
+        showAlert('Por favor selecciona un producto de la lista.', 'Producto requerido', 'warning');
+        return;
+      }
+      const prod = productos.find(p => p.id === selectedProductId);
+      if (!prod) return;
+      if (prod.stock < currentQty) {
+        showAlert(`Stock insuficiente. Solo quedan ${prod.stock} unidades de este producto.`, 'Stock insuficiente', 'warning');
+        return;
+      }
+      
+      const existingItemQty = productosAgregados
+        .filter(item => item.id === selectedProductId)
+        .reduce((sum, item) => sum + item.cantidad, 0);
+        
+      if (prod.stock < (existingItemQty + parseInt(currentQty))) {
+        showAlert(`No puedes agregar más de la cantidad en stock. Ya tienes ${existingItemQty} agregados y el stock es ${prod.stock}.`, 'Stock insuficiente', 'warning');
+        return;
+      }
+
+      const newItem = {
+        id: selectedProductId,
+        nombre: prod.nombre,
+        cantidad: parseInt(currentQty) || 1,
+        precio: prod.precio
+      };
+      setProductosAgregados(prev => [...prev, newItem]);
+      setSelectedProductId('');
+      setCurrentQty(1);
     }
   };
 
@@ -244,17 +313,24 @@ function AppContent() {
   const handleCreatePrestamo = async (e) => {
     e.preventDefault();
     const clienteId = selectedClienteForPrestamo?.id || newPrestamoData.cliente_id;
-    if (!clienteId || !newPrestamoData.producto.trim() || !newPrestamoData.precio_total) {
-      alert('Por favor completa los campos obligatorios.');
+    if (!clienteId) {
+      showAlert('Por favor selecciona un cliente.', 'Cliente requerido', 'warning');
+      return;
+    }
+    if (productosAgregados.length === 0) {
+      showAlert('Por favor agrega al menos un producto al préstamo.', 'Productos requeridos', 'warning');
       return;
     }
 
     setSubmitting(true);
     try {
       await addPrestamo({
-        ...newPrestamoData,
         cliente_id: clienteId,
-        producto_id: isCustomProduct ? null : (selectedProductId || null)
+        productos_seleccionados: productosAgregados,
+        dias_pago_sugeridos: newPrestamoData.dias_pago_sugeridos,
+        notas: newPrestamoData.notas,
+        fecha_prestamo: newPrestamoData.fecha_prestamo,
+        abono_inicial: newPrestamoData.abono_inicial
       });
       
       setNewPrestamoData({
@@ -263,18 +339,20 @@ function AppContent() {
         precio_total: '',
         abono_inicial: '',
         dias_pago_sugeridos: '',
-        notes: '', // just in case
+        notes: '',
         notas: '',
-        fecha_prestamo: new Date().toISOString().substring(0, 16)
+        fecha_prestamo: getLocalDateTimeString()
       });
       setSelectedClienteForPrestamo(null);
       setSelectedProductId('');
       setIsCustomProduct(false);
+      setProductosAgregados([]);
+      setCurrentQty(1);
+      setCustomName('');
+      setCustomPrice('');
       setOpenNewPrestamo(false);
-      
-      confetti({ particleCount: 80, spread: 80, colors: ['#a78bfa', '#818cf8', '#60a5fa'] });
     } catch (err) {
-      alert('Error al registrar préstamo: ' + err.message);
+      showAlert('Error al registrar préstamo: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -285,7 +363,7 @@ function AppContent() {
     e.preventDefault();
     const prestamoId = selectedPrestamoForAbono?.id || newAbonoData.prestamo_id;
     if (!prestamoId || !newAbonoData.monto) {
-      alert('Por favor completa los campos obligatorios.');
+      showAlert('Por favor completa los campos obligatorios.', 'Campos incompletos', 'warning');
       return;
     }
 
@@ -311,12 +389,12 @@ function AppContent() {
         prestamo_id: '',
         monto: '',
         notas: '',
-        fecha_abono: new Date().toISOString().substring(0, 16)
+        fecha_abono: getLocalDateTimeString()
       });
       setSelectedPrestamoForAbono(null);
       setOpenNewAbono(false);
     } catch (err) {
-      alert('Error al registrar abono: ' + err.message);
+      showAlert('Error al registrar abono: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -776,85 +854,145 @@ function AppContent() {
                 )}
               </div>
 
-              {/* Producto */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Producto prestado / fiado *</label>
-                <select
-                  required
-                  value={isCustomProduct ? 'custom' : selectedProductId}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'custom') {
-                      setIsCustomProduct(true);
-                      setSelectedProductId('');
-                      setNewPrestamoData(prev => ({ ...prev, producto: '', precio_total: '' }));
-                    } else if (val) {
-                      setIsCustomProduct(false);
-                      setSelectedProductId(val);
-                      const prod = productos.find(p => p.id === val);
-                      if (prod) {
-                        setNewPrestamoData(prev => ({ 
-                          ...prev, 
-                          producto: prod.nombre, 
-                          precio_total: prod.precio.toString() 
-                        }));
-                      }
-                    } else {
-                      setIsCustomProduct(false);
-                      setSelectedProductId('');
-                      setNewPrestamoData(prev => ({ ...prev, producto: '', precio_total: '' }));
-                    }
-                  }}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
-                >
-                  <option value="" className="bg-white dark:bg-slate-900">-- Selecciona un Producto --</option>
-                  {productos.map(p => {
-                    const cat = categorias.find(c => c.id === p.categoria_id);
-                    const catPrefix = cat ? `[${cat.nombre}] ` : '';
-                    const stockText = p.stock === 0 ? '(Agotado)' : `(${p.stock} disp.)`;
-                    return (
-                      <option 
-                        key={p.id} 
-                        value={p.id} 
-                        disabled={p.stock === 0}
-                        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              {/* Lista de productos agregados temporalmente */}
+              <div className="space-y-2.5 p-4 bg-slate-100/60 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-2xl">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 block">Artículos agregados:</span>
+                
+                {productosAgregados.length === 0 ? (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">No se han agregado productos todavía.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {productosAgregados.map((item, idx) => (
+                      <div 
+                        key={idx} 
+                        className="flex justify-between items-center text-xs py-1.5 px-2.5 bg-white dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/50 rounded-xl"
                       >
-                        {catPrefix}{p.nombre} - ${p.precio.toLocaleString('es-CO')} {stockText}
-                      </option>
-                    );
-                  })}
-                  <option value="custom" className="bg-white dark:bg-slate-900 font-semibold text-violet-600 dark:text-violet-400">
-                    ✍️ Escribir Manualmente (Otro)
-                  </option>
-                </select>
-
-                {isCustomProduct && (
-                  <div className="mt-2.5 space-y-1.5 animate-slide-up">
-                    <label className="text-[10.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Especificar Nombre *</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="Ej. Mercado, Zapatos, etc."
-                      value={newPrestamoData.producto}
-                      onChange={(e) => setNewPrestamoData(prev => ({ ...prev, producto: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
-                    />
+                        <span className="font-medium text-slate-800 dark:text-slate-200 leading-tight">
+                          {item.cantidad}x <strong className="font-semibold text-violet-600 dark:text-violet-400">{item.nombre}</strong>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-500 dark:text-slate-300 font-medium">
+                            Subtotal: ${(item.precio * item.cantidad).toLocaleString('es-CO')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setProductosAgregados(prev => prev.filter((_, i) => i !== idx))}
+                            className="p-1 hover:bg-rose-500/10 hover:text-rose-500 text-slate-400 dark:text-slate-500 rounded-lg transition-all"
+                            title="Remover"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Valores */}
+              {/* Selector de Producto para agregar */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-850/60 rounded-2xl space-y-4">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block">Agregar Producto o Servicio:</span>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2 space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Producto</label>
+                    <select
+                      value={isCustomProduct ? 'custom' : selectedProductId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomProduct(true);
+                          setSelectedProductId('');
+                        } else if (val) {
+                          setIsCustomProduct(false);
+                          setSelectedProductId(val);
+                        } else {
+                          setIsCustomProduct(false);
+                          setSelectedProductId('');
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                    >
+                      <option value="">-- Selecciona un Producto --</option>
+                      {productos.map(p => {
+                        const cat = categorias.find(c => c.id === p.categoria_id);
+                        const catPrefix = cat ? `[${cat.nombre}] ` : '';
+                        const stockText = p.stock === 0 ? '(Agotado)' : `(${p.stock} disp.)`;
+                        return (
+                          <option 
+                            key={p.id} 
+                            value={p.id} 
+                            disabled={p.stock === 0}
+                            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                          >
+                            {catPrefix}{p.nombre} - ${p.precio.toLocaleString('es-CO')} {stockText}
+                          </option>
+                        );
+                      })}
+                      <option value="custom" className="bg-white dark:bg-slate-900 font-semibold text-violet-600 dark:text-violet-400">
+                        ✍️ Escribir Manualmente (Otro)
+                      </option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Cantidad</label>
+                    <input 
+                      type="number" 
+                      min="1"
+                      value={currentQty}
+                      onChange={(e) => setCurrentQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                    />
+                  </div>
+                </div>
+
+                {isCustomProduct && (
+                  <div className="grid grid-cols-2 gap-3 animate-slide-up">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Nombre Personalizado *</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ej. Reparación, etc."
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Precio Unitario *</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        placeholder="Ej. 120000"
+                        value={customPrice}
+                        onChange={(e) => setCustomPrice(e.target.value)}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAgregarProducto}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-850 dark:hover:bg-slate-100 font-bold rounded-xl border border-slate-850 dark:border-slate-200 transition-all text-xs"
+                >
+                  <Plus size={14} />
+                  Agregar al Detalle
+                </button>
+              </div>
+
+              {/* Valores y Abono */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Valor Total ($) *</label>
                   <input 
-                    type="number" 
-                    required
-                    min="0"
-                    placeholder="Ej. 120000"
-                    value={newPrestamoData.precio_total}
-                    onChange={(e) => setNewPrestamoData(prev => ({ ...prev, precio_total: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                    type="text" 
+                    readOnly
+                    disabled
+                    value={productosAgregados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0).toLocaleString('es-CO')}
+                    className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none font-bold text-xs cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -865,7 +1003,7 @@ function AppContent() {
                     placeholder="Ej. 20000"
                     value={newPrestamoData.abono_inicial}
                     onChange={(e) => setNewPrestamoData(prev => ({ ...prev, abono_inicial: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-650 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                   />
                 </div>
               </div>
@@ -1032,6 +1170,9 @@ function AppContent() {
           </div>
         </div>
       )}
+
+      {/* AlertModal Global */}
+      <AlertModal isOpen={!!alertConfig} alertConfig={alertConfig} onClose={closeAlert} />
 
     </div>
   );

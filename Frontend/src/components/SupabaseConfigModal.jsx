@@ -4,7 +4,7 @@ import { X, Database, Info, Copy, Check, AlertTriangle } from 'lucide-react';
 import { getSupabaseConfig } from '../supabaseClient';
 
 export default function SupabaseConfigModal({ isOpen, onClose }) {
-  const { mode, saveCredentials, clearCredentials, isConfigured } = useApp();
+  const { mode, saveCredentials, clearCredentials, isConfigured, showConfirm } = useApp();
   const currentConfig = getSupabaseConfig();
   
   const [url, setUrl] = useState(currentConfig.url);
@@ -42,15 +42,19 @@ export default function SupabaseConfigModal({ isOpen, onClose }) {
   };
 
   const handleDisconnect = () => {
-    if (window.confirm('¿Estás seguro de desconectar Supabase? Volverás al Modo Demo (datos locales).')) {
-      clearCredentials();
-      setUrl('');
-      setAnonKey('');
-      setSuccessMsg('Desconectado. Has vuelto al modo de demostración.');
-      setTimeout(() => {
-        setSuccessMsg('');
-      }, 3000);
-    }
+    showConfirm(
+      '¿Estás seguro de desconectar Supabase? Volverás al Modo Demo (datos locales).',
+      'Desconectar Supabase',
+      () => {
+        clearCredentials();
+        setUrl('');
+        setAnonKey('');
+        setSuccessMsg('Desconectado. Has vuelto al modo de demostración.');
+        setTimeout(() => {
+          setSuccessMsg('');
+        }, 3000);
+      }
+    );
   };
 
   const sqlScript = `-- Ejecuta este código en la sección "SQL Editor" de tu proyecto en Supabase:

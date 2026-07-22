@@ -14,7 +14,7 @@ const PRESETS_COLORS = [
 ];
 
 export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
-  const { addCategoria, updateCategoria } = useApp();
+  const { addCategoria, updateCategoria, showAlert } = useApp();
   const [nombre, setNombre] = useState('');
   const [color, setColor] = useState(PRESETS_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +44,7 @@ export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
       }
       onClose();
     } catch (err) {
-      alert('Error al guardar categoría: ' + err.message);
+      showAlert('Error al guardar categoría: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
     }

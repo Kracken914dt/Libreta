@@ -12,13 +12,13 @@ const GoogleIcon = () => (
 );
 
 export default function LoginScreen({ onSkip }) {
-  const { loginWithGoogle, isConfigured } = useApp();
+  const { loginWithGoogle, isConfigured, showAlert } = useApp();
 
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
     } catch (err) {
-      alert('Error en Google Login: ' + err.message + '\nAsegúrate de habilitar Google Auth Provider en tu panel de Supabase.');
+      showAlert('Error en Google Login: ' + err.message + '\nAsegúrate de habilitar Google Auth Provider en tu panel de Supabase.', 'Error de autenticación', 'error');
     }
   };
 

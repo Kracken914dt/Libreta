@@ -138,7 +138,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-violet-950/20 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 dark:bg-violet-600/10 rounded-full blur-2xl group-hover:bg-violet-600/15 dark:group-hover:bg-violet-600/20 transition-all duration-300"></div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-violet-600/80 dark:text-violet-300/80">Saldo Fiado Pendiente</span>
+            <span className="text-sm font-medium text-violet-600/80 dark:text-violet-300/80">Saldo Pendiente</span>
             <div className="p-2 bg-violet-500/10 rounded-xl border border-violet-500/20 text-violet-600 dark:text-violet-400">
               <DollarSign size={20} />
             </div>

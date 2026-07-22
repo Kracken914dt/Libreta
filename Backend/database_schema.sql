@@ -20,9 +20,10 @@ CREATE TABLE IF NOT EXISTS prestamos (
     producto TEXT NOT NULL,
     precio_total NUMERIC NOT NULL CHECK (precio_total >= 0),
     fecha_prestamo TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'pagado')),
+    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'pagado', 'devuelto')),
     dias_pago_sugeridos TEXT,
     notas TEXT,
+    productos_fiados JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -55,12 +56,19 @@ DECLARE
     v_prestamo_id UUID;
     v_precio_total NUMERIC;
     v_total_abonado NUMERIC;
+    v_estado TEXT;
 BEGIN
     -- Obtener el prestamo_id según la operación (INSERT, UPDATE o DELETE)
     IF TG_OP = 'DELETE' THEN
         v_prestamo_id := OLD.prestamo_id;
     ELSE
         v_prestamo_id := NEW.prestamo_id;
+    END IF;
+
+    -- Si el préstamo está devuelto, no recalcular su estado
+    SELECT estado INTO v_estado FROM prestamos WHERE id = v_prestamo_id;
+    IF v_estado = 'devuelto' THEN
+        RETURN NULL;
     END IF;
 
     -- Obtener el precio total del préstamo

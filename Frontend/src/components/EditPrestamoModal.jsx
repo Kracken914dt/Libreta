@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { X, Edit3 } from 'lucide-react';
 
 export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
-  const { clientes, updatePrestamo } = useApp();
+  const { clientes, updatePrestamo, showAlert } = useApp();
   const [producto, setProducto] = useState('');
   const [precioTotal, setPrecioTotal] = useState('');
   const [diasPagoSugeridos, setDiasPagoSugeridos] = useState('');
@@ -50,7 +50,7 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
       });
       onClose();
     } catch (err) {
-      alert('Error al actualizar préstamo: ' + err.message);
+      showAlert('Error al actualizar préstamo: ' + err.message, 'Error', 'error');
     } finally {
       setSubmitting(false);
     }
