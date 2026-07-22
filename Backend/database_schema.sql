@@ -124,3 +124,204 @@ CREATE TABLE IF NOT EXISTS productos (
 
 CREATE INDEX IF NOT EXISTS productos_nombre_idx ON productos (nombre);
 CREATE INDEX IF NOT EXISTS productos_categoria_id_idx ON productos (categoria_id);
+
+
+
+
+
+
+
+
+
+-- ==========================================================
+-- TABLA USUARIOS
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS public.usuarios (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    nombre TEXT,
+    email TEXT UNIQUE,
+    foto TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ==========================================================
+-- AGREGAR usuario_id A TODAS LAS TABLAS
+-- ==========================================================
+
+ALTER TABLE productos
+ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE categorias_productos
+ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE clientes
+ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE prestamos
+ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE;
+
+ALTER TABLE abonos
+ADD COLUMN IF NOT EXISTS usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE;
+
+-- ==========================================================
+-- DEFAULT auth.uid()
+-- El frontend NO debe enviar usuario_id
+-- ==========================================================
+
+ALTER TABLE productos
+ALTER COLUMN usuario_id SET DEFAULT auth.uid();
+
+ALTER TABLE categorias_productos
+ALTER COLUMN usuario_id SET DEFAULT auth.uid();
+
+ALTER TABLE clientes
+ALTER COLUMN usuario_id SET DEFAULT auth.uid();
+
+ALTER TABLE prestamos
+ALTER COLUMN usuario_id SET DEFAULT auth.uid();
+
+ALTER TABLE abonos
+ALTER COLUMN usuario_id SET DEFAULT auth.uid();
+
+-- ==========================================================
+-- usuario_id obligatorio
+-- ==========================================================
+
+ALTER TABLE productos
+ALTER COLUMN usuario_id SET NOT NULL;
+
+ALTER TABLE categorias_productos
+ALTER COLUMN usuario_id SET NOT NULL;
+
+ALTER TABLE clientes
+ALTER COLUMN usuario_id SET NOT NULL;
+
+ALTER TABLE prestamos
+ALTER COLUMN usuario_id SET NOT NULL;
+
+ALTER TABLE abonos
+ALTER COLUMN usuario_id SET NOT NULL;
+
+-- ==========================================================
+-- HABILITAR RLS
+-- ==========================================================
+
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categorias_productos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prestamos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE abonos ENABLE ROW LEVEL SECURITY;
+
+-- ==========================================================
+-- ELIMINAR POLÍTICAS SI EXISTEN
+-- ==========================================================
+
+DROP POLICY IF EXISTS usuarios_policy ON usuarios;
+DROP POLICY IF EXISTS productos_policy ON productos;
+DROP POLICY IF EXISTS categorias_policy ON categorias_productos;
+DROP POLICY IF EXISTS clientes_policy ON clientes;
+DROP POLICY IF EXISTS prestamos_policy ON prestamos;
+DROP POLICY IF EXISTS abonos_policy ON abonos;
+
+-- ==========================================================
+-- TABLA USUARIOS
+-- ==========================================================
+
+CREATE POLICY usuarios_policy
+ON usuarios
+FOR ALL
+TO authenticated
+USING (id = auth.uid())
+WITH CHECK (id = auth.uid());
+
+-- ==========================================================
+-- PRODUCTOS
+-- ==========================================================
+
+CREATE POLICY productos_policy
+ON productos
+FOR ALL
+TO authenticated
+USING (usuario_id = auth.uid())
+WITH CHECK (usuario_id = auth.uid());
+
+-- ==========================================================
+-- CATEGORIAS
+-- ==========================================================
+
+CREATE POLICY categorias_policy
+ON categorias_productos
+FOR ALL
+TO authenticated
+USING (usuario_id = auth.uid())
+WITH CHECK (usuario_id = auth.uid());
+
+-- ==========================================================
+-- CLIENTES
+-- ==========================================================
+
+CREATE POLICY clientes_policy
+ON clientes
+FOR ALL
+TO authenticated
+USING (usuario_id = auth.uid())
+WITH CHECK (usuario_id = auth.uid());
+
+-- ==========================================================
+-- PRESTAMOS
+-- ==========================================================
+
+CREATE POLICY prestamos_policy
+ON prestamos
+FOR ALL
+TO authenticated
+USING (usuario_id = auth.uid())
+WITH CHECK (usuario_id = auth.uid());
+
+-- ==========================================================
+-- ABONOS
+-- ==========================================================
+
+CREATE POLICY abonos_policy
+ON abonos
+FOR ALL
+TO authenticated
+USING (usuario_id = auth.uid())
+WITH CHECK (usuario_id = auth.uid());
+
+-- ==========================================================
+-- CREAR AUTOMÁTICAMENTE EL USUARIO
+-- ==========================================================
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+
+INSERT INTO public.usuarios(
+    id,
+    nombre,
+    email,
+    foto
+)
+VALUES(
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name',''),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url','')
+);
+
+RETURN NEW;
+
+END;
+$$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user();

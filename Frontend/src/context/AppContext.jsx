@@ -43,6 +43,11 @@ const MOCK_PRODUCTOS = [
 
 export const AppProvider = ({ children }) => {
   const [mode, setMode] = useState(() => {
+    const envUrl = import.meta.env.VITE_SUPABASE_URL;
+    const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (envUrl && envKey && envUrl.trim() !== '' && !envKey.includes('coloca_aqui') && envKey.trim() !== '') {
+      return 'supabase';
+    }
     const savedMode = localStorage.getItem('app_mode');
     if (savedMode === 'supabase' && isSupabaseConfigured()) {
       return 'supabase';

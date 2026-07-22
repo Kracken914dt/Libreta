@@ -3,7 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import Dashboard from './components/Dashboard';
 import ClientesList from './components/ClientesList';
 import PrestamosList from './components/PrestamosList';
-import SupabaseConfigModal from './components/SupabaseConfigModal';
+
 import EditClienteModal from './components/EditClienteModal';
 import EditPrestamoModal from './components/EditPrestamoModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
@@ -500,23 +500,6 @@ function AppContent() {
           </div>
         )}
 
-        {/* Sección de base de datos footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/20">
-          <button 
-            onClick={() => setOpenConfigModal(true)}
-            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-transparent hover:border-slate-200 dark:hover:border-slate-850 transition-all group"
-          >
-            <div className="flex items-center gap-2.5 text-left">
-              <Database size={16} className={isConfigured ? 'text-emerald-500' : 'text-amber-500'} />
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white leading-none">Base de Datos</p>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                  {mode === 'supabase' ? 'Supabase' : 'Modo Demo'}
-                </span>
-              </div>
-            </div>
-          </button>
-        </div>
       </aside>
 
       {/* CONTENEDOR PRINCIPAL */}
@@ -560,14 +543,7 @@ function AppContent() {
               )}
             </div>
 
-            <button 
-              onClick={() => setOpenConfigModal(true)}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors"
-              title="Configurar base de datos"
-            >
-              <Database size={16} />
-            </button>
-          </div>
+            </div>
         </header>
 
         {/* CONTENIDO PRINCIPAL SCROLLABLE */}
@@ -705,8 +681,7 @@ function AppContent() {
           MODALES DE DIÁLOGO Y EDICIÓN
           ========================================================================= */}
 
-      {/* MODAL CONFIGURACIÓN SUPABASE */}
-      <SupabaseConfigModal isOpen={openConfigModal} onClose={() => setOpenConfigModal(false)} />
+
 
       {/* MODALES DE EDICIÓN Y CREACIÓN */}
       <EditClienteModal 
