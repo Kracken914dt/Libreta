@@ -82,7 +82,7 @@ export default function LoginScreen({ onSkip }) {
         </div>
 
         <div className="mt-8 text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
-          Libreta de control • Roberto Gómez
+          Libreta de control
         </div>
       </div>
     </div>
