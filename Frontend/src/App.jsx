@@ -8,6 +8,9 @@ import EditClienteModal from './components/EditClienteModal';
 import EditPrestamoModal from './components/EditPrestamoModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import LoginScreen from './components/LoginScreen';
+import ProductosList from './components/ProductosList';
+import EditProductoModal from './components/EditProductoModal';
+import EditCategoriaModal from './components/EditCategoriaModal';
 import confetti from 'canvas-confetti';
 import { 
   LayoutDashboard, 
@@ -21,7 +24,8 @@ import {
   Sun, 
   Moon,
   LogOut,
-  UserCheck
+  UserCheck,
+  Package
 } from 'lucide-react';
 
 function AppContent() {
@@ -30,12 +34,16 @@ function AppContent() {
     toggleMode, 
     clientes, 
     prestamos, 
+    productos,
+    categorias,
     addCliente, 
     addPrestamo, 
     addAbono, 
     deleteCliente,
     deletePrestamo,
     deleteAbono,
+    deleteProducto,
+    deleteCategoria,
     isConfigured,
     user,
     logout,
@@ -65,10 +73,14 @@ function AppContent() {
   const [openNewCliente, setOpenNewCliente] = useState(false);
   const [openNewPrestamo, setOpenNewPrestamo] = useState(false);
   const [openNewAbono, setOpenNewAbono] = useState(false);
+  const [openNewProducto, setOpenNewProducto] = useState(false);
+  const [openNewCategoria, setOpenNewCategoria] = useState(false);
 
   // Estados de Modales de Edición
   const [editingCliente, setEditingCliente] = useState(null);
   const [editingPrestamo, setEditingPrestamo] = useState(null);
+  const [editingProducto, setEditingProducto] = useState(null);
+  const [editingCategoria, setEditingCategoria] = useState(null);
 
   // Estado del Modal de Eliminación Personalizado
   const [deleteTarget, setDeleteTarget] = useState(null); // { type, data, name, message }
@@ -96,6 +108,8 @@ function AppContent() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [isCustomProduct, setIsCustomProduct] = useState(false);
 
   // Pre-llenar fecha y hora actual en modales al abrirse
   useEffect(() => {
@@ -165,6 +179,27 @@ function AppContent() {
     });
   };
 
+  const onRequestDeleteProducto = (producto) => {
+    setDeleteTarget({
+      type: 'producto',
+      data: producto,
+      name: producto.nombre,
+      message: 'Se eliminará este producto de tu inventario permanentemente. Esta acción no se puede deshacer.'
+    });
+  };
+
+  const onRequestDeleteCategoria = (categoria) => {
+    const prodsCount = productos.filter(p => p.categoria_id === categoria.id).length;
+    setDeleteTarget({
+      type: 'categoria',
+      data: categoria,
+      name: categoria.nombre,
+      message: prodsCount > 0
+        ? `Se eliminará esta categoría. Los ${prodsCount} productos asociados a ella no se eliminarán, pero quedarán sin categoría asignada.`
+        : 'Se eliminará esta categoría permanentemente. Esta acción no se puede deshacer.'
+    });
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     const { type, data } = deleteTarget;
@@ -175,6 +210,10 @@ function AppContent() {
         await deletePrestamo(data.id);
       } else if (type === 'abono') {
         await deleteAbono(data.id);
+      } else if (type === 'producto') {
+        await deleteProducto(data.id);
+      } else if (type === 'categoria') {
+        await deleteCategoria(data.id);
       }
     } catch (err) {
       alert(`Error al eliminar: ${err.message}`);
@@ -214,7 +253,8 @@ function AppContent() {
     try {
       await addPrestamo({
         ...newPrestamoData,
-        cliente_id: clienteId
+        cliente_id: clienteId,
+        producto_id: isCustomProduct ? null : (selectedProductId || null)
       });
       
       setNewPrestamoData({
@@ -223,10 +263,13 @@ function AppContent() {
         precio_total: '',
         abono_inicial: '',
         dias_pago_sugeridos: '',
+        notes: '', // just in case
         notas: '',
         fecha_prestamo: new Date().toISOString().substring(0, 16)
       });
       setSelectedClienteForPrestamo(null);
+      setSelectedProductId('');
+      setIsCustomProduct(false);
       setOpenNewPrestamo(false);
       
       confetti({ particleCount: 80, spread: 80, colors: ['#a78bfa', '#818cf8', '#60a5fa'] });
@@ -330,6 +373,18 @@ function AppContent() {
           >
             <DollarSign size={18} />
             Préstamos y Fiados
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('productos')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'productos' 
+                ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/10 dark:border-violet-500/20 shadow-sm' 
+                : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white border border-transparent'
+            }`}
+          >
+            <Package size={18} />
+            Inventario / Productos
           </button>
         </nav>
 
@@ -469,6 +524,16 @@ function AppContent() {
                 onRequestDeleteAbono={onRequestDeleteAbono}
               />
             )}
+            {activeTab === 'productos' && (
+              <ProductosList 
+                setOpenNewProducto={setOpenNewProducto}
+                setOpenNewCategoria={setOpenNewCategoria}
+                onEditProducto={(p) => setEditingProducto(p)}
+                onEditCategoria={(c) => setEditingCategoria(c)}
+                onRequestDeleteProducto={onRequestDeleteProducto}
+                onRequestDeleteCategoria={onRequestDeleteCategoria}
+              />
+            )}
           </div>
         </main>
       </div>
@@ -519,6 +584,15 @@ function AppContent() {
                 <DollarSign size={18} />
                 Préstamos
               </button>
+              <button 
+                onClick={() => { setActiveTab('productos'); setMobileMenuOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  activeTab === 'productos' ? 'bg-violet-500/10 text-violet-650 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                <Package size={18} />
+                Inventario
+              </button>
             </nav>
 
             {mode === 'supabase' && user && (
@@ -556,7 +630,7 @@ function AppContent() {
       {/* MODAL CONFIGURACIÓN SUPABASE */}
       <SupabaseConfigModal isOpen={openConfigModal} onClose={() => setOpenConfigModal(false)} />
 
-      {/* MODALES DE EDICIÓN */}
+      {/* MODALES DE EDICIÓN Y CREACIÓN */}
       <EditClienteModal 
         isOpen={!!editingCliente} 
         onClose={() => setEditingCliente(null)} 
@@ -569,12 +643,26 @@ function AppContent() {
         prestamo={editingPrestamo} 
       />
 
+      <EditProductoModal
+        isOpen={openNewProducto || !!editingProducto}
+        onClose={() => { setOpenNewProducto(false); setEditingProducto(null); }}
+        producto={editingProducto}
+      />
+
+      <EditCategoriaModal
+        isOpen={openNewCategoria || !!editingCategoria}
+        onClose={() => { setOpenNewCategoria(false); setEditingCategoria(null); }}
+        categoria={editingCategoria}
+      />
+
       {/* MODAL DE ELIMINACIÓN PERSONALIZADO */}
       <ConfirmDeleteModal 
         isOpen={!!deleteTarget}
         title={
           deleteTarget?.type === 'cliente' ? 'Eliminar Cliente' :
-          deleteTarget?.type === 'prestamo' ? 'Eliminar Préstamo / Fiado' : 'Eliminar Abono'
+          deleteTarget?.type === 'prestamo' ? 'Eliminar Préstamo / Fiado' :
+          deleteTarget?.type === 'producto' ? 'Eliminar Producto' :
+          deleteTarget?.type === 'categoria' ? 'Eliminar Categoría' : 'Eliminar Abono'
         }
         message={deleteTarget?.message}
         itemName={deleteTarget?.name}
@@ -691,14 +779,68 @@ function AppContent() {
               {/* Producto */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Producto prestado / fiado *</label>
-                <input 
-                  type="text" 
+                <select
                   required
-                  placeholder="Ej. Zapatos, Pantalón, Mercado, etc."
-                  value={newPrestamoData.producto}
-                  onChange={(e) => setNewPrestamoData(prev => ({ ...prev, producto: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
-                />
+                  value={isCustomProduct ? 'custom' : selectedProductId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'custom') {
+                      setIsCustomProduct(true);
+                      setSelectedProductId('');
+                      setNewPrestamoData(prev => ({ ...prev, producto: '', precio_total: '' }));
+                    } else if (val) {
+                      setIsCustomProduct(false);
+                      setSelectedProductId(val);
+                      const prod = productos.find(p => p.id === val);
+                      if (prod) {
+                        setNewPrestamoData(prev => ({ 
+                          ...prev, 
+                          producto: prod.nombre, 
+                          precio_total: prod.precio.toString() 
+                        }));
+                      }
+                    } else {
+                      setIsCustomProduct(false);
+                      setSelectedProductId('');
+                      setNewPrestamoData(prev => ({ ...prev, producto: '', precio_total: '' }));
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                >
+                  <option value="" className="bg-white dark:bg-slate-900">-- Selecciona un Producto --</option>
+                  {productos.map(p => {
+                    const cat = categorias.find(c => c.id === p.categoria_id);
+                    const catPrefix = cat ? `[${cat.nombre}] ` : '';
+                    const stockText = p.stock === 0 ? '(Agotado)' : `(${p.stock} disp.)`;
+                    return (
+                      <option 
+                        key={p.id} 
+                        value={p.id} 
+                        disabled={p.stock === 0}
+                        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      >
+                        {catPrefix}{p.nombre} - ${p.precio.toLocaleString('es-CO')} {stockText}
+                      </option>
+                    );
+                  })}
+                  <option value="custom" className="bg-white dark:bg-slate-900 font-semibold text-violet-600 dark:text-violet-400">
+                    ✍️ Escribir Manualmente (Otro)
+                  </option>
+                </select>
+
+                {isCustomProduct && (
+                  <div className="mt-2.5 space-y-1.5 animate-slide-up">
+                    <label className="text-[10.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Especificar Nombre *</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="Ej. Mercado, Zapatos, etc."
+                      value={newPrestamoData.producto}
+                      onChange={(e) => setNewPrestamoData(prev => ({ ...prev, producto: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Valores */}
@@ -742,13 +884,23 @@ function AppContent() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Días de Pago Sugeridos</label>
-                  <input 
-                    type="text" 
-                    placeholder="Ej. Sábados, Quincenal, Fin de mes"
+                  <select
                     value={newPrestamoData.dias_pago_sugeridos}
                     onChange={(e) => setNewPrestamoData(prev => ({ ...prev, dias_pago_sugeridos: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
-                  />
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                  >
+                    <option value="" className="bg-white dark:bg-slate-900">-- Sin especificar --</option>
+                    <option value="Semanal (Lunes)" className="bg-white dark:bg-slate-900">Semanal (Lunes)</option>
+                    <option value="Semanal (Martes)" className="bg-white dark:bg-slate-900">Semanal (Martes)</option>
+                    <option value="Semanal (Miércoles)" className="bg-white dark:bg-slate-900">Semanal (Miércoles)</option>
+                    <option value="Semanal (Jueves)" className="bg-white dark:bg-slate-900">Semanal (Jueves)</option>
+                    <option value="Semanal (Viernes)" className="bg-white dark:bg-slate-900">Semanal (Viernes)</option>
+                    <option value="Semanal (Sábado)" className="bg-white dark:bg-slate-900">Semanal (Sábado)</option>
+                    <option value="Semanal (Domingo)" className="bg-white dark:bg-slate-900">Semanal (Domingo)</option>
+                    <option value="Quincenal (15 y 30)" className="bg-white dark:bg-slate-900">Quincenal (15 y 30)</option>
+                    <option value="Mensual" className="bg-white dark:bg-slate-900">Mensual</option>
+                    <option value="Fin de mes" className="bg-white dark:bg-slate-900">Fin de mes</option>
+                  </select>
                 </div>
               </div>
 

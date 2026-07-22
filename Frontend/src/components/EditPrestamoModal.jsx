@@ -120,13 +120,23 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Días de Pago Sugeridos</label>
-              <input 
-                type="text" 
-                placeholder="Ej. Sábados, Quincenal, Fin de mes"
+              <select
                 value={diasPagoSugeridos}
                 onChange={(e) => setDiasPagoSugeridos(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
-              />
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+              >
+                <option value="" className="bg-white dark:bg-slate-900">-- Sin especificar --</option>
+                <option value="Semanal (Lunes)" className="bg-white dark:bg-slate-900">Semanal (Lunes)</option>
+                <option value="Semanal (Martes)" className="bg-white dark:bg-slate-900">Semanal (Martes)</option>
+                <option value="Semanal (Miércoles)" className="bg-white dark:bg-slate-900">Semanal (Miércoles)</option>
+                <option value="Semanal (Jueves)" className="bg-white dark:bg-slate-900">Semanal (Jueves)</option>
+                <option value="Semanal (Viernes)" className="bg-white dark:bg-slate-900">Semanal (Viernes)</option>
+                <option value="Semanal (Sábado)" className="bg-white dark:bg-slate-900">Semanal (Sábado)</option>
+                <option value="Semanal (Domingo)" className="bg-white dark:bg-slate-900">Semanal (Domingo)</option>
+                <option value="Quincenal (15 y 30)" className="bg-white dark:bg-slate-900">Quincenal (15 y 30)</option>
+                <option value="Mensual" className="bg-white dark:bg-slate-900">Mensual</option>
+                <option value="Fin de mes" className="bg-white dark:bg-slate-900">Fin de mes</option>
+              </select>
             </div>
           </div>
 

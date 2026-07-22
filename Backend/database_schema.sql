@@ -86,3 +86,33 @@ CREATE TRIGGER trigger_recalcular_estado_prestamo
 AFTER INSERT OR UPDATE OR DELETE ON abonos
 FOR EACH ROW
 EXECUTE FUNCTION recalcular_estado_prestamo();
+
+
+-- =========================================================================
+-- TABLAS DE INVENTARIO: CATEGORÍAS Y PRODUCTOS
+-- =========================================================================
+
+-- 4. Tabla de Categorías de Productos
+CREATE TABLE IF NOT EXISTS categorias_productos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre TEXT NOT NULL,
+    color TEXT DEFAULT '#8b5cf6',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS categorias_nombre_idx ON categorias_productos (nombre);
+
+-- 5. Tabla de Productos
+CREATE TABLE IF NOT EXISTS productos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    precio NUMERIC NOT NULL CHECK (precio >= 0),
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    imagen_url TEXT,
+    categoria_id UUID REFERENCES categorias_productos(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS productos_nombre_idx ON productos (nombre);
+CREATE INDEX IF NOT EXISTS productos_categoria_id_idx ON productos (categoria_id);

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNewCliente, setOpenNewAbono }) {
-  const { clientes, prestamos, abonos, loading } = useApp();
+  const { clientes, prestamos, abonos, productos, loading } = useApp();
 
   // Formateador de moneda colombiana / pesos
   const formatCurrency = (value) => {
@@ -227,6 +227,22 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
           Registrar Nuevo Cliente
         </button>
       </div>
+
+      {/* Alertas de Stock */}
+      {productos && productos.filter(p => p.stock <= 5).length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-center justify-between text-xs text-amber-800 dark:text-amber-400">
+          <div className="flex items-center gap-2">
+            <span className="p-1 bg-amber-500 text-white rounded">⚠️</span>
+            <span>Tienes <strong>{productos.filter(p => p.stock <= 5).length} productos</strong> con bajo stock o agotados.</span>
+          </div>
+          <button 
+            onClick={() => setActiveTab('productos')} 
+            className="font-bold underline uppercase text-[10px]"
+          >
+            Ver Inventario
+          </button>
+        </div>
+      )}
 
       {/* Gráfico y Actividad Reciente */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

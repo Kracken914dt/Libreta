@@ -71,3 +71,24 @@
     transform: translateY(0);
   }
 }
+
+/* Fix: calendar/date picker icon in dark mode */
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.8);
+  cursor: pointer;
+}
+
+/* Light mode scrollbar */
+:root:not(.dark) ::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+:root:not(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+:root:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
