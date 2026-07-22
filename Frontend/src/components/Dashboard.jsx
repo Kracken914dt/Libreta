@@ -10,7 +10,8 @@ import {
   PlusCircle, 
   UserPlus, 
   FileText,
-  X 
+  X,
+  RefreshCw
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNewCliente, setOpenNewAbono }) {
@@ -52,46 +53,90 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
     });
   };
 
-  // Cálculos de métricas
-  const totalFiado = prestamos.reduce((sum, p) => sum + p.precio_total, 0);
+  // Cálculos de métricas (excluyendo préstamos devueltos)
+  const totalFiado = prestamos.filter(p => p.estado !== 'devuelto').reduce((sum, p) => sum + p.precio_total, 0);
 
   // Construcción del libro diario / historial de transacciones de caja (Ingresos y Egresos por Devolución)
   const transaccionesRecaudo = [];
-  
+
+  // 1. Agregar todos los abonos como ingresos de caja
   abonos.forEach(a => {
     const prestamo = prestamos.find(p => p.id === a.prestamo_id);
     const cliente = prestamo ? clientes.find(c => c.id === prestamo.cliente_id) : null;
     
-    // Todo abono registrado inicialmente es un ingreso
     transaccionesRecaudo.push({
-      id: `in_${a.id}`,
+      id: `abono_${a.id}`,
       fecha: a.fecha_abono,
       cliente: cliente?.nombre || 'Cliente Desconocido',
-      producto: prestamo?.producto || 'Desconocido',
+      producto: prestamo ? `${prestamo.producto}${a.notas ? ` (${a.notas})` : ''}` : 'Abono',
       tipo: 'Abono',
       monto: a.monto,
-      esIngreso: true
+      tipoStyle: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+      montoPrefix: '+',
+      montoStyle: 'text-emerald-600 dark:text-emerald-400',
+      cajaImpact: a.monto
+    });
+  });
+
+  // 2. Agregar todos los préstamos / fiados creados
+  prestamos.forEach(p => {
+    const cliente = clientes.find(c => c.id === p.cliente_id);
+    
+    transaccionesRecaudo.push({
+      id: `fiado_${p.id}`,
+      fecha: p.fecha_prestamo,
+      cliente: cliente?.nombre || 'Cliente Desconocido',
+      producto: p.notas ? `${p.producto} (${p.notas})` : p.producto,
+      tipo: 'Fiado',
+      monto: p.precio_total,
+      tipoStyle: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
+      montoPrefix: '',
+      montoStyle: 'text-violet-600 dark:text-violet-400',
+      cajaImpact: 0 // No afecta la caja directa (es un movimiento a crédito)
     });
 
-    // Si el préstamo correspondiente fue devuelto, se anula contablemente mediante un reembolso/egreso
-    if (prestamo && prestamo.estado === 'devuelto') {
-      transaccionesRecaudo.push({
-        id: `out_${a.id}`,
-        fecha: prestamo.updated_at || a.fecha_abono, // usará la fecha de actualización del préstamo (cuando se devolvió)
-        cliente: cliente?.nombre || 'Cliente Desconocido',
-        producto: `${prestamo.producto} (Devolución)`,
-        tipo: 'Devuelto (Reembolso)',
-        monto: -a.monto,
-        esIngreso: false
-      });
+    // 3. Si el préstamo fue devuelto, registramos la devolución
+    if (p.estado === 'devuelto') {
+      const abonosDelPrestamo = abonos.filter(a => a.prestamo_id === p.id);
+      const totalAbonado = abonosDelPrestamo.reduce((sum, a) => sum + a.monto, 0);
+
+      // Si había dinero abonado, registramos un egreso por reembolso
+      if (totalAbonado > 0) {
+        transaccionesRecaudo.push({
+          id: `reembolso_${p.id}`,
+          fecha: p.updated_at || p.fecha_prestamo,
+          cliente: cliente?.nombre || 'Cliente Desconocido',
+          producto: `Reembolso por devolución de ${p.producto}`,
+          tipo: 'Reembolso',
+          monto: totalAbonado,
+          tipoStyle: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+          montoPrefix: '-',
+          montoStyle: 'text-rose-600 dark:text-rose-400',
+          cajaImpact: -totalAbonado
+        });
+      } else {
+        // Devolución sin abono (sólo anulación de deuda y retorno del producto)
+        transaccionesRecaudo.push({
+          id: `devolucion_${p.id}`,
+          fecha: p.updated_at || p.fecha_prestamo,
+          cliente: cliente?.nombre || 'Cliente Desconocido',
+          producto: `Devolución de ${p.producto} (Deuda anulada)`,
+          tipo: 'Devolución',
+          monto: p.precio_total,
+          tipoStyle: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+          montoPrefix: '',
+          montoStyle: 'text-slate-400 line-through dark:text-slate-550',
+          cajaImpact: 0
+        });
+      }
     }
   });
 
   // Ordenar de más reciente a más antiguo
   transaccionesRecaudo.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-  // El Total Cobrado Neto es la suma de todo este historial (los abonos a préstamos devueltos se anulan a cero netos)
-  const totalCobradoNeto = transaccionesRecaudo.reduce((sum, t) => sum + t.monto, 0);
+  // El Total Cobrado Neto es la suma de los impactos reales en caja (Abonos - Reembolsos)
+  const totalCobradoNeto = transaccionesRecaudo.reduce((sum, t) => sum + t.cajaImpact, 0);
   
   // Calcular saldo pendiente detallado (sólo préstamos pendientes)
   let totalPendiente = 0;
@@ -116,10 +161,11 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
   const actividades = [
     ...prestamos.map(p => ({
       tipo: 'prestamo',
+      estado: p.estado,
       fecha: p.fecha_prestamo,
       cliente: clientes.find(c => c.id === p.cliente_id)?.nombre || 'Cliente Desconocido',
       monto: p.precio_total,
-      detalle: p.producto,
+      detalle: p.estado === 'devuelto' ? `${p.producto} (Devuelto)` : p.producto,
       id: p.id
     })),
     ...abonos.map(a => {
@@ -354,16 +400,20 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                 <div key={idx} className="flex items-start gap-3 text-sm pb-3 border-b border-slate-100 dark:border-slate-800/60 last:border-0 last:pb-0">
                   <div className={`p-1.5 rounded-lg mt-0.5 ${
                     act.tipo === 'prestamo' 
-                      ? 'bg-rose-500/10 text-rose-500' 
+                      ? (act.estado === 'devuelto' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500') 
                       : 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
                   }`}>
-                    {act.tipo === 'prestamo' ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+                    {act.tipo === 'prestamo' 
+                      ? (act.estado === 'devuelto' ? <RefreshCw size={14} /> : <ArrowUpRight size={14} />) 
+                      : <ArrowDownLeft size={14} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                       <p className="font-medium text-slate-950 dark:text-white truncate">{act.cliente}</p>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 shrink-0 ml-2">
-                        {act.tipo === 'prestamo' ? '-' : '+'}{formatCurrency(act.monto)}
+                      <span className={`font-semibold shrink-0 ml-2 ${
+                        act.estado === 'devuelto' ? 'text-slate-400 line-through dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'
+                      }`}>
+                        {act.tipo === 'prestamo' ? (act.estado === 'devuelto' ? '' : '-') : '+'}{formatCurrency(act.monto)}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{act.detalle}</p>
@@ -417,7 +467,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
-                      {transaccionesRecaudo.map((t) => (
+                       {transaccionesRecaudo.map((t) => (
                         <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
                           <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                             {formatFullDate(t.fecha)}
@@ -429,18 +479,12 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                             {t.producto}
                           </td>
                           <td className="py-3 px-3 text-center whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                              t.esIngreso
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                                : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${t.tipoStyle}`}>
                               {t.tipo}
                             </span>
                           </td>
-                          <td className={`py-3 px-3 text-right font-bold whitespace-nowrap ${
-                            t.esIngreso ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                          }`}>
-                            {t.esIngreso ? '+' : ''}{formatCurrency(t.monto)}
+                          <td className={`py-3 px-3 text-right font-bold whitespace-nowrap ${t.montoStyle}`}>
+                            {t.montoPrefix}{formatCurrency(t.monto)}
                           </td>
                         </tr>
                       ))}

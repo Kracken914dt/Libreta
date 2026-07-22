@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { AppProvider, useApp } from './context/AppContext';
 import Dashboard from './components/Dashboard';
 import ClientesList from './components/ClientesList';
@@ -933,7 +934,8 @@ function AppContent() {
                       type="number" 
                       min="1"
                       value={currentQty}
-                      onChange={(e) => setCurrentQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => setCurrentQty(e.target.value)}
+                      onBlur={(e) => { if (!e.target.value || parseInt(e.target.value) < 1) setCurrentQty(1); }}
                       onKeyDown={handleNumberKeyDown}
                       className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                     />

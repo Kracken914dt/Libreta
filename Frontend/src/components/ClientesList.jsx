@@ -51,10 +51,12 @@ export default function ClientesList({
   // Obtener estadísticas de un cliente
   const getClienteStats = (clienteId) => {
     const prestamosCliente = prestamos.filter(p => p.cliente_id === clienteId);
-    const prestamosIds = prestamosCliente.map(p => p.id);
-    const abonosCliente = abonos.filter(a => prestamosIds.includes(a.prestamo_id));
+    const prestamosValidosIds = prestamosCliente.filter(p => p.estado !== 'devuelto').map(p => p.id);
+    const abonosCliente = abonos.filter(a => prestamosValidosIds.includes(a.prestamo_id));
 
-    const totalFiado = prestamosCliente.reduce((sum, p) => sum + p.precio_total, 0);
+    const totalFiado = prestamosCliente
+      .filter(p => p.estado !== 'devuelto')
+      .reduce((sum, p) => sum + p.precio_total, 0);
     const totalAbonado = abonosCliente.reduce((sum, a) => sum + a.monto, 0);
 
     let deudaActiva = 0;
@@ -317,7 +319,6 @@ export default function ClientesList({
                     <History size={16} />
                     Historial de Préstamos y Fiados
                   </h3>
-
                   {clientePrestamos.length === 0 ? (
                     <p className="text-slate-400 dark:text-slate-500 text-sm py-4 text-center">Este cliente no registra ningún fiado.</p>
                   ) : (
@@ -325,7 +326,7 @@ export default function ClientesList({
                       {clientePrestamos.map((prestamo) => {
                         const abonosPrestamo = abonos.filter(a => a.prestamo_id === prestamo.id);
                         const totalAbonadoPrestamo = abonosPrestamo.reduce((sum, a) => sum + a.monto, 0);
-                        const saldoRestante = prestamo.precio_total - totalAbonadoPrestamo;
+                        const saldoRestante = prestamo.estado === 'devuelto' ? 0 : (prestamo.precio_total - totalAbonadoPrestamo);
 
                         return (
                           <div 
@@ -335,14 +336,16 @@ export default function ClientesList({
                             <div className="flex justify-between items-start">
                               <div>
                                 <h4 className="font-semibold text-slate-900 dark:text-white text-sm">{prestamo.producto}</h4>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(prestamo.fecha_prestamo)}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-550 mt-0.5">{formatDate(prestamo.fecha_prestamo)}</p>
                               </div>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                 prestamo.estado === 'pagado'
                                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                  : prestamo.estado === 'devuelto'
+                                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                                   : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
                               }`}>
-                                {prestamo.estado === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
+                                {prestamo.estado === 'pagado' ? 'PAGADO' : (prestamo.estado === 'devuelto' ? 'DEVUELTO' : 'PENDIENTE')}
                               </span>
                             </div>
 
@@ -385,10 +388,10 @@ export default function ClientesList({
                                     <div key={abono.id} className="flex justify-between items-center text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/30 p-1.5 rounded">
                                       <div>
                                         <span className="font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</span>
-                                        {abono.notes && <span className="text-slate-500 italic ml-2">({abono.notes})</span>}
+                                        {abono.notes && <span className="text-slate-550 italic ml-2">({abono.notes})</span>}
                                         {abono.notas && <span className="text-slate-550 dark:text-slate-450 italic ml-2">({abono.notas})</span>}
                                       </div>
-                                      <span className="text-slate-400 dark:text-slate-500 text-[10px]">{formatDate(abono.fecha_abono)}</span>
+                                      <span className="text-slate-400 dark:text-slate-550 text-[10px]">{formatDate(abono.fecha_abono)}</span>
                                     </div>
                                   ))}
                                 </div>
