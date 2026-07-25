@@ -165,7 +165,7 @@ export default function ClientesList({
           placeholder="Buscar cliente por nombre, cédula o teléfono..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-550 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/50 transition-all duration-300"
+          className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/50 transition-all duration-300"
         />
       </div>
 
@@ -185,7 +185,7 @@ export default function ClientesList({
             return (
               <div 
                 key={cliente.id}
-                className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl hover:border-slate-350 dark:hover:border-slate-700/80 transition-all duration-300 flex flex-col justify-between shadow-sm"
+                className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-300 flex flex-col justify-between shadow-sm"
               >
                 <div>
                   <div className="flex justify-between items-start">
@@ -390,7 +390,7 @@ export default function ClientesList({
                             <div className="flex justify-between items-start">
                               <div>
                                 <h4 className="font-semibold text-slate-900 dark:text-white text-sm">{prestamo.producto}</h4>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-550 mt-0.5">{formatDate(prestamo.fecha_prestamo)}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(prestamo.fecha_prestamo)}</p>
                               </div>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                 prestamo.estado === 'pagado'
@@ -442,10 +442,10 @@ export default function ClientesList({
                                     <div key={abono.id} className="flex justify-between items-center text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/30 p-1.5 rounded">
                                       <div>
                                         <span className="font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</span>
-                                        {abono.notes && <span className="text-slate-550 italic ml-2">({abono.notes})</span>}
-                                        {abono.notas && <span className="text-slate-550 dark:text-slate-450 italic ml-2">({abono.notas})</span>}
+                                        {abono.notes && <span className="text-slate-500 italic ml-2">({abono.notes})</span>}
+                                        {abono.notas && <span className="text-slate-500 dark:text-slate-400 italic ml-2">({abono.notas})</span>}
                                       </div>
-                                      <span className="text-slate-400 dark:text-slate-550 text-[10px]">{formatDate(abono.fecha_abono)}</span>
+                                      <span className="text-slate-400 dark:text-slate-500 text-[10px]">{formatDate(abono.fecha_abono)}</span>
                                     </div>
                                   ))}
                                 </div>

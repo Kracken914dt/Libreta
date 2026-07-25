@@ -125,7 +125,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
           monto: p.precio_total,
           tipoStyle: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
           montoPrefix: '',
-          montoStyle: 'text-slate-400 line-through dark:text-slate-550',
+          montoStyle: 'text-slate-400 line-through dark:text-slate-500',
           cajaImpact: 0
         });
       }
@@ -417,7 +417,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{act.detalle}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-550 mt-1">{formatDate(act.fecha)}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">{formatDate(act.fecha)}</p>
                   </div>
                 </div>
               ))
@@ -430,7 +430,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl p-6 relative animate-slide-up max-h-[85vh] flex flex-col">
             {/* Header */}
-            <div className="flex justify-between items-center pb-4 border-b border-slate-150 dark:border-slate-850">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-800">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <TrendingUp size={20} className="text-teal-500" />
@@ -442,7 +442,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
               </div>
               <button 
                 onClick={() => setShowRecaudoModal(false)}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-650 dark:hover:text-white transition-all"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all"
               >
                 <X size={20} />
               </button>
@@ -451,7 +451,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
             {/* Listado / Tabla */}
             <div className="flex-1 overflow-y-auto py-4 space-y-2.5 pr-1">
               {transaccionesRecaudo.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 dark:text-slate-550 text-sm">
+                <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
                   No hay transacciones registradas de recaudo.
                 </div>
               ) : (
@@ -466,7 +466,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                         <th className="py-2.5 px-3 text-right">Monto</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                        {transaccionesRecaudo.map((t) => (
                         <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
                           <td className="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
@@ -475,7 +475,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                           <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white">
                             {t.cliente}
                           </td>
-                          <td className="py-3 px-3 text-slate-650 dark:text-slate-350 max-w-[300px] truncate" title={t.producto}>
+                          <td className="py-3 px-3 text-slate-600 dark:text-slate-300 max-w-[300px] truncate" title={t.producto}>
                             {t.producto}
                           </td>
                           <td className="py-3 px-3 text-center whitespace-nowrap">
@@ -495,7 +495,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
             </div>
 
             {/* Footer con el balance neto */}
-            <div className="pt-4 border-t border-slate-150 dark:border-slate-850 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20 p-4 rounded-2xl">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20 p-4 rounded-2xl">
               <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Total Neto en Caja:</span>
               <span className="text-lg font-black text-slate-950 dark:text-white tracking-tight">
                 {formatCurrency(totalCobradoNeto)}

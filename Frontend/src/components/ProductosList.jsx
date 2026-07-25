@@ -74,7 +74,7 @@ export default function ProductosList({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowManageCats(!showManageCats)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-250 dark:border-slate-850 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 transition-all"
           >
             <Tag size={14} />
             Categorías
@@ -91,7 +91,7 @@ export default function ProductosList({
 
       {/* Panel de Gestión de Categorías */}
       {showManageCats && (
-        <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 p-5 rounded-2xl animate-slide-up space-y-4">
+        <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl animate-slide-up space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Tag size={16} className="text-violet-500" />
@@ -150,23 +150,23 @@ export default function ProductosList({
       {/* Resumen e Indicadores */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider block">Total Productos</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Total Productos</span>
           <span className="text-xl font-bold text-slate-900 dark:text-white mt-1 block">{productos.length}</span>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider block">Bajo Stock (≤5)</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Bajo Stock (≤5)</span>
           <span className={`text-xl font-bold mt-1 block ${getLowStockCount() > 0 ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}>
             {getLowStockCount()}
           </span>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider block">Agotados</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Agotados</span>
           <span className={`text-xl font-bold mt-1 block ${getOutOfStockCount() > 0 ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}`}>
             {getOutOfStockCount()}
           </span>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider block">Valor Inventario</span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">Valor Inventario</span>
           <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
             {formatCurrency(productos.reduce((sum, p) => sum + (p.precio * p.stock), 0))}
           </span>
@@ -239,7 +239,7 @@ export default function ProductosList({
             return (
               <div 
                 key={p.id}
-                className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-850 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group relative"
+                className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group relative"
               >
                 {/* Imagen del Producto */}
                 <div className="h-44 w-full bg-slate-100 dark:bg-slate-950 relative flex items-center justify-center border-b border-slate-100 dark:border-slate-900">
@@ -255,7 +255,7 @@ export default function ProductosList({
                       }}
                     />
                   ) : (
-                    <Package className="h-12 w-12 text-slate-350 dark:text-slate-700" />
+                    <Package className="h-12 w-12 text-slate-300 dark:text-slate-700" />
                   )}
                   
                   {/* Etiqueta de Categoría */}
@@ -316,11 +316,11 @@ export default function ProductosList({
                   {/* Detalles de precio y stock */}
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-900 flex items-center justify-between">
                     <div>
-                      <span className="text-[9px] text-slate-450 dark:text-slate-500 font-bold block uppercase tracking-wider">Precio</span>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider">Precio</span>
                       <span className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(p.precio)}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[9px] text-slate-450 dark:text-slate-500 font-bold block uppercase tracking-wider">Disponibles</span>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider">Disponibles</span>
                       <span className={`text-xs font-bold ${
                         isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-500' : 'text-slate-700 dark:text-slate-300'
                       }`}>

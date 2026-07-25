@@ -250,7 +250,7 @@ EXECUTE FUNCTION recalcular_estado_prestamo();
                 </div>
 
                 <div className="relative">
-                  <pre className="bg-slate-950 p-4 rounded-xl text-[10px] text-slate-300 overflow-x-auto font-mono max-h-48 border border-slate-850">
+                  <pre className="bg-slate-950 p-4 rounded-xl text-[10px] text-slate-300 overflow-x-auto font-mono max-h-48 border border-slate-800">
                     {sqlScript}
                   </pre>
                   <button 

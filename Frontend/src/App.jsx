@@ -544,7 +544,7 @@ function AppContent() {
             </button>
 
             {/* Indicador e Interruptor de Base de Datos */}
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-1.5 text-xs shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs shadow-sm dark:shadow-none">
               <span className={`w-2 h-2 rounded-full ${mode === 'supabase' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
               <span className="text-slate-600 dark:text-slate-300 font-medium">
                 {mode === 'supabase' ? 'Supabase' : 'Demo'}
@@ -552,7 +552,7 @@ function AppContent() {
               {isConfigured && (
                 <button 
                   onClick={toggleMode}
-                  className="ml-2 font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 border-l border-slate-200 dark:border-slate-850 pl-2 text-[10px] uppercase tracking-wider"
+                  className="ml-2 font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 border-l border-slate-200 dark:border-slate-800 pl-2 text-[10px] uppercase tracking-wider"
                 >
                   Cambiar a {mode === 'demo' ? 'Supabase' : 'Demo'}
                 </button>
@@ -612,7 +612,7 @@ function AppContent() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 lg:hidden animate-fade-in">
           <div className="absolute inset-0" onClick={() => setMobileMenuOpen(false)}></div>
-          <div className="relative w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-full flex flex-col p-6 animate-slide-up text-slate-700 dark:text-slate-350">
+          <div className="relative w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-full flex flex-col p-6 animate-slide-up text-slate-700 dark:text-slate-300">
             <div className="flex justify-between items-center pb-6 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <BookOpen size={20} className="text-violet-500" />
@@ -630,7 +630,7 @@ function AppContent() {
               <button 
                 onClick={() => { setActiveTab('dashboard'); setMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  activeTab === 'dashboard' ? 'bg-violet-500/10 text-violet-650 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  activeTab === 'dashboard' ? 'bg-violet-500/10 text-violet-700 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
                 <LayoutDashboard size={18} />
@@ -639,7 +639,7 @@ function AppContent() {
               <button 
                 onClick={() => { setActiveTab('clientes'); setMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  activeTab === 'clientes' ? 'bg-violet-500/10 text-violet-650 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  activeTab === 'clientes' ? 'bg-violet-500/10 text-violet-700 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
                 <Users size={18} />
@@ -648,7 +648,7 @@ function AppContent() {
               <button 
                 onClick={() => { setActiveTab('prestamos'); setMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  activeTab === 'prestamos' ? 'bg-violet-500/10 text-violet-650 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  activeTab === 'prestamos' ? 'bg-violet-500/10 text-violet-700 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
                 <DollarSign size={18} />
@@ -657,7 +657,7 @@ function AppContent() {
               <button 
                 onClick={() => { setActiveTab('productos'); setMobileMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  activeTab === 'productos' ? 'bg-violet-500/10 text-violet-650 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  activeTab === 'productos' ? 'bg-violet-500/10 text-violet-700 dark:text-violet-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
                 <Package size={18} />
@@ -820,7 +820,7 @@ function AppContent() {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Cliente *</label>
                 {selectedClienteForPrestamo ? (
-                  <div className="p-3 bg-violet-550/[0.07] dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-violet-700 dark:text-violet-300 rounded-xl text-xs flex justify-between items-center">
+                  <div className="p-3 bg-violet-500/[0.07] dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-violet-700 dark:text-violet-300 rounded-xl text-xs flex justify-between items-center">
                     <span>Fiar a: <strong>{selectedClienteForPrestamo.nombre}</strong></span>
                     <button 
                       type="button" 
@@ -883,7 +883,7 @@ function AppContent() {
               </div>
 
               {/* Selector de Producto para agregar */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-850/60 rounded-2xl space-y-4">
+              <div className="p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800/60 rounded-2xl space-y-4">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200 block">Agregar Producto o Servicio:</span>
                 
                 <div className="grid grid-cols-3 gap-3">
@@ -972,7 +972,7 @@ function AppContent() {
                 <button
                   type="button"
                   onClick={handleAgregarProducto}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-850 dark:hover:bg-slate-100 font-bold rounded-xl border border-slate-850 dark:border-slate-200 transition-all text-xs"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-100 font-bold rounded-xl border border-slate-800 dark:border-slate-200 transition-all text-xs"
                 >
                   <Plus size={14} />
                   Agregar al Detalle
@@ -1000,7 +1000,7 @@ function AppContent() {
                     value={newPrestamoData.abono_inicial}
                     onChange={(e) => setNewPrestamoData(prev => ({ ...prev, abono_inicial: formatMontoInput(e.target.value) }))}
                     onKeyDown={handleNumberKeyDown}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-650 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                   />
                 </div>
               </div>
@@ -1091,7 +1091,7 @@ function AppContent() {
                       <button 
                         type="button" 
                         onClick={() => setSelectedPrestamoForAbono(null)}
-                        className="text-slate-400 hover:text-slate-650 dark:hover:text-white text-[10px] uppercase font-bold shrink-0 ml-2"
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-[10px] uppercase font-bold shrink-0 ml-2"
                       >
                         Cambiar
                       </button>
@@ -1162,7 +1162,7 @@ function AppContent() {
               <button 
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 bg-teal-650 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-teal-950/30 dark:shadow-teal-950/45 disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-teal-950/30 dark:shadow-teal-950/45 disabled:opacity-50"
               >
                 {submitting ? 'Registrando...' : 'Registrar Abono'}
               </button>

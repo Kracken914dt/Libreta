@@ -89,7 +89,7 @@ export default function PrestamosList({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Registro de Préstamos y Fiados</h1>
-          <p className="text-slate-550 dark:text-slate-400 mt-1">Registra productos fiados a cuotas sin intereses y gestiona sus abonos.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Registra productos fiados a cuotas sin intereses y gestiona sus abonos.</p>
         </div>
         <button 
           onClick={() => setOpenNewPrestamo(true)}
@@ -112,7 +112,7 @@ export default function PrestamosList({
             placeholder="Buscar por cliente o producto..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-550 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/50 transition-all"
+            className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/50 transition-all"
           />
         </div>
 
@@ -182,7 +182,7 @@ export default function PrestamosList({
                 className={`bg-white dark:bg-slate-900/40 border transition-all duration-300 rounded-2xl shadow-sm ${
                   prestamo.estado === 'pagado' 
                     ? 'border-emerald-500/20 dark:border-emerald-500/20 hover:border-emerald-500/40 dark:hover:border-emerald-500/35' 
-                    : 'border-slate-200 dark:border-slate-800/80 hover:border-slate-350 dark:hover:border-slate-700/80'
+                    : 'border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80'
                 }`}
               >
                 {/* Cabecera de la Tarjeta */}
@@ -210,8 +210,8 @@ export default function PrestamosList({
                     </h3>
                     
                     <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">
-                      Cliente: <strong className="text-violet-650 dark:text-violet-400">{cliente?.nombre || 'Cliente Desconocido'}</strong>
-                      {cliente?.cedula && <span className="text-slate-450 dark:text-slate-500 text-xs font-normal"> (C.C. {cliente.cedula})</span>}
+                      Cliente: <strong className="text-violet-700 dark:text-violet-400">{cliente?.nombre || 'Cliente Desconocido'}</strong>
+                      {cliente?.cedula && <span className="text-slate-400 dark:text-slate-500 text-xs font-normal"> (C.C. {cliente.cedula})</span>}
                     </p>
                   </div>
 
@@ -256,7 +256,7 @@ export default function PrestamosList({
                             () => devolverPrestamo(prestamo.id)
                           );
                         }}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg border border-slate-250 dark:border-slate-850 shadow-sm transition-all"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm transition-all"
                         title="Registrar devolución de productos"
                       >
                         <RotateCcw size={14} />
@@ -279,14 +279,14 @@ export default function PrestamosList({
                     <button 
                       onClick={() => onRequestDeletePrestamo(prestamo)}
                       title="Eliminar Préstamo"
-                      className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-650 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 transition-all"
+                      className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 transition-all"
                     >
                       <Trash2 size={14} />
                     </button>
 
                     <button 
                       onClick={() => setExpandedPrestamoId(isExpanded ? null : prestamo.id)}
-                      className="p-2 text-slate-450 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-2 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={isExpanded ? "Contraer" : "Ver detalles y abonos"}
                     >
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -318,7 +318,7 @@ export default function PrestamosList({
                               ? prestamo.productos_fiados
                               : (typeof prestamo.productos_fiados === 'string' ? JSON.parse(prestamo.productos_fiados) : [])
                             ).map((p, idx) => (
-                              <div key={idx} className="flex justify-between items-center py-1 border-b border-slate-200/30 dark:border-slate-800/40 last:border-0 last:pb-0 text-slate-650 dark:text-slate-350">
+                              <div key={idx} className="flex justify-between items-center py-1 border-b border-slate-200/30 dark:border-slate-800/40 last:border-0 last:pb-0 text-slate-600 dark:text-slate-300">
                                 <span>{p.cantidad}x <strong className="text-slate-800 dark:text-slate-200 font-semibold">{p.nombre}</strong></span>
                                 <span>Unitario: {formatCurrency(p.precio)} | Subtotal: {formatCurrency(p.precio * p.cantidad)}</span>
                               </div>
@@ -350,7 +350,7 @@ export default function PrestamosList({
                             </thead>
                             <tbody>
                               {abonosP.map((abono) => (
-                                <tr key={abono.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-700 dark:text-slate-200">
+                                <tr key={abono.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-700 dark:text-slate-200">
                                   <td className="p-3 text-slate-400 dark:text-slate-500">{formatDate(abono.fecha_abono)}</td>
                                   <td className="p-3 font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</td>
                                   <td className="p-3 italic text-slate-500 dark:text-slate-400">{abono.notes || abono.notas || '-'}</td>

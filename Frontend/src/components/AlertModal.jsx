@@ -28,7 +28,7 @@ export default function AlertModal({ isOpen, alertConfig, onClose }) {
   } else if (type === 'warning') {
     icon = <AlertTriangle size={24} className="text-amber-500" />;
     colorTheme = 'amber';
-    buttonStyle = 'bg-amber-600 hover:bg-amber-505 focus:ring-amber-500/50';
+    buttonStyle = 'bg-amber-600 hover:bg-amber-500 focus:ring-amber-500/50';
   } else if (type === 'confirm') {
     icon = <HelpCircle size={24} className="text-indigo-500" />;
     colorTheme = 'indigo';
@@ -59,7 +59,7 @@ export default function AlertModal({ isOpen, alertConfig, onClose }) {
 
         {/* Contenido principal */}
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="p-3 bg-slate-50 dark:bg-slate-950/50 rounded-full border border-slate-100 dark:border-slate-850">
+          <div className="p-3 bg-slate-50 dark:bg-slate-950/50 rounded-full border border-slate-100 dark:border-slate-800">
             {icon}
           </div>
           <div>
@@ -73,7 +73,7 @@ export default function AlertModal({ isOpen, alertConfig, onClose }) {
         </div>
 
         {/* Botones de acción */}
-        <div className="flex gap-3 mt-6 pt-2 border-t border-slate-100 dark:border-slate-850">
+        <div className="flex gap-3 mt-6 pt-2 border-t border-slate-100 dark:border-slate-800">
           {type === 'confirm' ? (
             <>
               <button
