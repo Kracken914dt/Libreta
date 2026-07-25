@@ -505,8 +505,9 @@ function AppContent() {
                   {user.email}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={logout}
+                aria-label="Cerrar sesión"
                 title="Cerrar sesión"
                 className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-950/50"
               >
@@ -524,8 +525,9 @@ function AppContent() {
         {/* BARRA DE NAVEGACIÓN SUPERIOR */}
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/80 px-4 flex items-center justify-between shrink-0 transition-colors duration-300">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(true)}
+              aria-label="Abrir menú de navegación"
               className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg lg:hidden"
             >
               <Menu size={20} />
@@ -535,9 +537,10 @@ function AppContent() {
 
           <div className="flex items-center gap-3">
             {/* Toggle de Modo Claro / Oscuro */}
-            <button 
+            <button
               onClick={toggleTheme}
               className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm dark:shadow-none"
+              aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
               title={theme === 'dark' ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -618,8 +621,9 @@ function AppContent() {
                 <BookOpen size={20} className="text-violet-500" />
                 <span className="font-bold text-slate-950 dark:text-white">La Libreta</span>
               </div>
-              <button 
+              <button
                 onClick={() => setMobileMenuOpen(false)}
+                aria-label="Cerrar menú de navegación"
                 className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X size={20} />
@@ -743,8 +747,9 @@ function AppContent() {
       {openNewCliente && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up">
-            <button 
+            <button
               onClick={() => setOpenNewCliente(false)}
+              aria-label="Cerrar"
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"
             >
               <X size={20} />
@@ -806,8 +811,9 @@ function AppContent() {
       {openNewPrestamo && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-slide-up max-h-[90vh] overflow-y-auto">
-            <button 
+            <button
               onClick={() => { setOpenNewPrestamo(false); setSelectedClienteForPrestamo(null); }}
+              aria-label="Cerrar"
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"
             >
               <X size={20} />
@@ -871,6 +877,7 @@ function AppContent() {
                             type="button"
                             onClick={() => setProductosAgregados(prev => prev.filter((_, i) => i !== idx))}
                             className="p-1 hover:bg-rose-500/10 hover:text-rose-500 text-slate-400 dark:text-slate-500 rounded-lg transition-all"
+                            aria-label="Quitar del carrito"
                             title="Remover"
                           >
                             <Trash2 size={13} />
@@ -1069,6 +1076,7 @@ function AppContent() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up max-h-[90vh] overflow-y-auto">
             <button 
               onClick={() => { setOpenNewAbono(false); setSelectedPrestamoForAbono(null); }}
+              aria-label="Cerrar"
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"
             >
               <X size={20} />

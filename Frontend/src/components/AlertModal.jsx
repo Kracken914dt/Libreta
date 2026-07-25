@@ -50,8 +50,9 @@ export default function AlertModal({ isOpen, alertConfig, onClose }) {
         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative animate-slide-up"
       >
         {/* Botón cerrar esquina */}
-        <button 
+        <button
           onClick={onClose}
+          aria-label="Cerrar"
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white"
         >
           <X size={18} />

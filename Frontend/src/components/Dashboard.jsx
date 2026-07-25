@@ -440,8 +440,9 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
                   Registro de ingresos por abonos y egresos por devoluciones de productos.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowRecaudoModal(false)}
+                aria-label="Cerrar"
                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all"
               >
                 <X size={20} />

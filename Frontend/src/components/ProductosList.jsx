@@ -100,6 +100,7 @@ export default function ProductosList({
             <button
               onClick={() => setOpenNewCategoria(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-600 dark:text-violet-400 text-[11px] font-bold rounded-lg border border-violet-500/20 transition-all"
+              aria-label="Crear nueva categoría"
             >
               <FolderPlus size={12} />
               Agregar Categoría
@@ -127,6 +128,7 @@ export default function ProductosList({
                       <button
                         onClick={() => onEditCategoria(cat)}
                         className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        aria-label={`Editar categoría ${cat.nombre}`}
                         title="Editar"
                       >
                         <Edit size={10} />
@@ -134,6 +136,7 @@ export default function ProductosList({
                       <button
                         onClick={() => onRequestDeleteCategoria(cat)}
                         className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-rose-500"
+                        aria-label={`Eliminar categoría ${cat.nombre}`}
                         title="Eliminar"
                       >
                         <Trash2 size={10} />
@@ -334,6 +337,7 @@ export default function ProductosList({
                     <button
                       onClick={() => onEditProducto(p)}
                       className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-xl border border-slate-200 dark:border-slate-800 transition-all"
+                      aria-label="Editar producto"
                       title="Editar Producto"
                     >
                       <Edit size={13} />
@@ -341,6 +345,7 @@ export default function ProductosList({
                     <button
                       onClick={() => onRequestDeleteProducto(p)}
                       className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-xl border border-slate-200 dark:border-slate-800 transition-all"
+                      aria-label="Eliminar producto"
                       title="Eliminar Producto"
                     >
                       <Trash2 size={13} />

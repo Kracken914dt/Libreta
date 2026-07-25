@@ -248,7 +248,7 @@ export default function PrestamosList({
                     )}
 
                     {prestamo.estado !== 'devuelto' && (
-                      <button 
+                      <button
                         onClick={() => {
                           showConfirm(
                             `¿Estás seguro de registrar la devolución de este préstamo?\n\nDetalle: ${prestamo.producto}\n\nEsto restaurará el stock de los productos correspondientes en el inventario.`,
@@ -257,6 +257,7 @@ export default function PrestamosList({
                           );
                         }}
                         className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm transition-all"
+                        aria-label="Marcar préstamo como devuelto"
                         title="Registrar devolución de productos"
                       >
                         <RotateCcw size={14} />
@@ -266,8 +267,9 @@ export default function PrestamosList({
 
                     {/* Botón Editar */}
                     {prestamo.estado !== 'devuelto' && (
-                      <button 
+                      <button
                         onClick={() => onEditPrestamo(prestamo)}
+                        aria-label="Editar préstamo"
                         title="Editar Préstamo"
                         className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 transition-all"
                       >
@@ -276,17 +278,19 @@ export default function PrestamosList({
                     )}
 
                     {/* Botón Eliminar */}
-                    <button 
+                    <button
                       onClick={() => onRequestDeletePrestamo(prestamo)}
+                      aria-label="Eliminar préstamo"
                       title="Eliminar Préstamo"
                       className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 transition-all"
                     >
                       <Trash2 size={14} />
                     </button>
 
-                    <button 
+                    <button
                       onClick={() => setExpandedPrestamoId(isExpanded ? null : prestamo.id)}
                       className="p-2 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      aria-label={isExpanded ? "Colapsar" : "Expandir"}
                       title={isExpanded ? "Contraer" : "Ver detalles y abonos"}
                     >
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -350,20 +354,21 @@ export default function PrestamosList({
                             </thead>
                             <tbody>
                               {abonosP.map((abono) => (
-                                <tr key={abono.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-700 dark:text-slate-200">
-                                  <td className="p-3 text-slate-400 dark:text-slate-500">{formatDate(abono.fecha_abono)}</td>
-                                  <td className="p-3 font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</td>
-                                  <td className="p-3 italic text-slate-500 dark:text-slate-400">{abono.notes || abono.notas || '-'}</td>
-                                  <td className="p-3 text-right">
-                                    <button 
-                                      onClick={() => onRequestDeleteAbono(abono)}
-                                      className="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 rounded hover:bg-rose-500/5 transition-colors"
-                                      title="Eliminar Abono"
-                                    >
-                                      <Trash2 size={13} />
-                                    </button>
-                                  </td>
-                                </tr>
+                                  <tr key={abono.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-700 dark:text-slate-200">
+                                    <td className="p-3 text-slate-400 dark:text-slate-500">{formatDate(abono.fecha_abono)}</td>
+                                    <td className="p-3 font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</td>
+                                    <td className="p-3 italic text-slate-500 dark:text-slate-400">{abono.notes || abono.notas || '-'}</td>
+                                    <td className="p-3 text-right">
+                                      <button
+                                        onClick={() => onRequestDeleteAbono(abono)}
+                                        className="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 rounded hover:bg-rose-500/5 transition-colors"
+                                        aria-label="Eliminar abono"
+                                        title="Eliminar Abono"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </td>
+                                  </tr>
                               ))}
                             </tbody>
                           </table>

@@ -148,8 +148,9 @@ EXECUTE FUNCTION recalcular_estado_prestamo();
               <p className="text-xs text-slate-400">Conecta tu propia base de datos Supabase</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
+            aria-label="Cerrar"
             className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
           >
             <X size={20} />
@@ -253,9 +254,10 @@ EXECUTE FUNCTION recalcular_estado_prestamo();
                   <pre className="bg-slate-950 p-4 rounded-xl text-[10px] text-slate-300 overflow-x-auto font-mono max-h-48 border border-slate-800">
                     {sqlScript}
                   </pre>
-                  <button 
+                  <button
                     onClick={copyToClipboard}
                     className="absolute top-2.5 right-2.5 p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-all"
+                    aria-label="Copiar código SQL"
                     title="Copiar Código"
                   >
                     {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
