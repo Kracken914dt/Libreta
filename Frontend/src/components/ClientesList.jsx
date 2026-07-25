@@ -222,7 +222,7 @@ export default function ClientesList({
                     <button
                       onClick={() => handleExportPdf(cliente.id)}
                       disabled={exportingPdf}
-                      title="Exportar estado de cuenta en PDF"
+                      title={`Exportar PDF · Estado de cuenta al ${new Date().toLocaleString('es-CO')}`}
                       className="p-2 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 rounded-lg border border-violet-500/20 transition-all disabled:opacity-50"
                     >
                       <FileDown size={16} />
@@ -305,7 +305,7 @@ export default function ClientesList({
                   <button
                     onClick={() => handleExportPdf(selectedCliente.id)}
                     disabled={exportingPdf}
-                    title="Exportar estado de cuenta en PDF"
+                    title={`Exportar PDF · Estado de cuenta al ${new Date().toLocaleString('es-CO')}`}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-semibold rounded-lg border border-violet-500/20 transition-all disabled:opacity-50"
                   >
                     <FileDown size={14} />
