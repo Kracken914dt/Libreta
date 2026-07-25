@@ -32,3 +32,34 @@ export const formatMontoInput = (val) => {
   }
   return clean;
 };
+
+/**
+ * Normaliza entrada libre de gramos/dimensiones a un string canónico
+ * con punto decimal y hasta `maxDecimals` decimales redondeados.
+ *
+ * Comportamiento:
+ *  - Acepta tanto "." como "," como separador decimal.
+ *  - Descarta todo lo que no sea dígito, punto o coma.
+ *  - Si el valor no es parseable, retorna "" (no lanza).
+ *  - Strip trailing zeros: "10.000" -> "10", "3.500" -> "3.500".
+ *  - "0" sólo si el input representa explícitamente 0.
+ *
+ * Casos de prueba manuales (ejecutar en devTools sin test runner):
+ *   formatGramosInput("3.5")             -> "3.5"
+ *   formatGramosInput("3,500")           -> "3.500"
+ *   formatGramosInput("3.567", 3)        -> "3.567"
+ *   formatGramosInput("3.5678", 3)       -> "3.568"   (rounding)
+ *   formatGramosInput("abc")             -> ""        (no throw)
+ *   formatGramosInput("10.000")          -> "10"
+ *   formatGramosInput("")                -> ""
+ */
+export const formatGramosInput = (val, maxDecimals = 3) => {
+  if (val == null) return '';
+  const cleaned = String(val).replace(/[^\d.,]/g, '').replace(',', '.');
+  if (cleaned === '' || cleaned === '.') return '';
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return '';
+  const fixed = num.toFixed(maxDecimals);
+  // strip trailing zeros & dangling dot: "10.000" -> "10", "3.500" -> "3.500"
+  return fixed.replace(/\.?0+$/, '') || '0';
+};
