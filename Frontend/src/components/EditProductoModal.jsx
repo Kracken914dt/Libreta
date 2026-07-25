@@ -141,13 +141,13 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
           {/* Nombre */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Nombre del Producto *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               required
               placeholder="Ej. Zapatos Nike Air, Camisa Polo Azul"
               value={nombre}
               onChange={(e) => setNombre(formatNameInput(e.target.value))}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
             />
           </div>
 
@@ -157,7 +157,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             <select
               value={categoriaId}
               onChange={(e) => setCategoriaId(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
             >
               <option value="" className="bg-white dark:bg-slate-900">-- Sin Categoría --</option>
               {categorias.map(cat => (
@@ -172,28 +172,28 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio Venta ($) *</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 min="0"
                 placeholder="Ej. 120000"
                 value={precio}
                 onChange={(e) => setPrecio(formatMontoInput(e.target.value))}
                 onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Stock / Cantidad *</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 min="0"
                 placeholder="Ej. 10"
                 value={stock}
                 onChange={(e) => setStock(formatMontoInput(e.target.value))}
                 onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 placeholder="Ej. 5.2"
                 value={pesoGramos}
                 onChange={(e) => setPesoGramos(formatGramosInput(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
             <div className="space-y-1.5">
@@ -219,7 +219,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 placeholder="Ej. 18"
                 value={largo}
                 onChange={(e) => setLargo(formatGramosInput(e.target.value, 2))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 value={costoPorGramo}
                 onChange={(e) => setCostoPorGramo(formatMontoInput(e.target.value))}
                 onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
             <div className="space-y-1.5">
@@ -247,7 +247,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 value={precioPorGramo}
                 onChange={(e) => setPrecioPorGramo(formatMontoInput(e.target.value))}
                 onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
           </div>
@@ -268,12 +268,12 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">URL de Imagen (Opcional)</label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <input 
-                  type="url" 
+                <input
+                  type="url"
                   placeholder="https://ejemplo.com/imagen.jpg"
                   value={imagenUrl}
                   onChange={(e) => setImagenUrl(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                 />
                 <ImageIcon className="absolute left-3 top-3 text-slate-400" size={14} />
               </div>
@@ -296,12 +296,12 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
           {/* Descripción */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Descripción (Máx. 100 caracteres)</label>
-            <textarea 
+            <textarea
               placeholder="Detalles sobre tallas, colores o especificaciones del producto..."
               maxLength={100}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs h-20 resize-none"
+              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs h-20 resize-none"
             />
           </div>
 

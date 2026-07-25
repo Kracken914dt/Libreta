@@ -165,7 +165,7 @@ export default function ClientesList({
           placeholder="Buscar cliente por nombre, cédula o teléfono..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/50 transition-all duration-300"
+          className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all duration-300"
         />
       </div>
 
@@ -224,7 +224,7 @@ export default function ClientesList({
                       disabled={exportingPdf}
                       aria-label="Exportar estado de cuenta en PDF"
                       title={`Exportar PDF · Estado de cuenta al ${new Date().toLocaleString('es-CO')}`}
-                      className="p-2 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 rounded-lg border border-violet-500/20 transition-all disabled:opacity-50"
+                      className="p-2 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 rounded-lg border border-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all disabled:opacity-50"
                     >
                       <FileDown size={16} />
                     </button>
@@ -237,14 +237,15 @@ export default function ClientesList({
                         rel="noopener noreferrer"
                         aria-label="Enviar recordatorio por WhatsApp"
                         title="Enviar recordatorio por WhatsApp"
-                        className="p-2 bg-emerald-500/5 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg border border-emerald-500/20 transition-all"
+                        className="p-2 bg-emerald-500/5 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg border border-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                       >
                         <MessageSquare size={16} />
                       </a>
                     ) : (
-                      <button 
-                        disabled 
+                      <button
+                        disabled
                         title="Sin número de teléfono"
+                        aria-label="Enviar recordatorio por WhatsApp (sin número)"
                         className="p-2 bg-slate-50 dark:bg-slate-950 text-slate-300 dark:text-slate-600 rounded-lg border border-slate-200 dark:border-slate-800/50 cursor-not-allowed"
                       >
                         <MessageSquare size={16} />
@@ -256,7 +257,7 @@ export default function ClientesList({
                       onClick={() => onEditCliente(cliente)}
                       aria-label="Editar cliente"
                       title="Editar Cliente"
-                      className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 transition-all"
+                      className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                     >
                       <Edit3 size={16} />
                     </button>
@@ -266,7 +267,7 @@ export default function ClientesList({
                       onClick={() => onRequestDeleteCliente(cliente, stats)}
                       aria-label="Eliminar cliente"
                       title="Eliminar Cliente"
-                      className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 transition-all"
+                      className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -319,7 +320,7 @@ export default function ClientesList({
                   <button
                     onClick={() => setSelectedCliente(null)}
                     aria-label="Cerrar"
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-colors"
                   >
                     <X size={20} />
                   </button>

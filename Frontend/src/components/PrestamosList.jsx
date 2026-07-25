@@ -112,7 +112,7 @@ export default function PrestamosList({
             placeholder="Buscar por cliente o producto..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/50 transition-all"
+            className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all"
           />
         </div>
 
@@ -271,7 +271,7 @@ export default function PrestamosList({
                         onClick={() => onEditPrestamo(prestamo)}
                         aria-label="Editar préstamo"
                         title="Editar Préstamo"
-                        className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 transition-all"
+                        className="p-2 bg-blue-500/5 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg border border-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                       >
                         <Edit3 size={14} />
                       </button>
@@ -282,14 +282,14 @@ export default function PrestamosList({
                       onClick={() => onRequestDeletePrestamo(prestamo)}
                       aria-label="Eliminar préstamo"
                       title="Eliminar Préstamo"
-                      className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 transition-all"
+                      className="p-2 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-lg border border-rose-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                     >
                       <Trash2 size={14} />
                     </button>
 
                     <button
                       onClick={() => setExpandedPrestamoId(isExpanded ? null : prestamo.id)}
-                      className="p-2 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-2 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-colors"
                       aria-label={isExpanded ? "Colapsar" : "Expandir"}
                       title={isExpanded ? "Contraer" : "Ver detalles y abonos"}
                     >
@@ -361,7 +361,7 @@ export default function PrestamosList({
                                     <td className="p-3 text-right">
                                       <button
                                         onClick={() => onRequestDeleteAbono(abono)}
-                                        className="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 rounded hover:bg-rose-500/5 transition-colors"
+                                        className="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 rounded hover:bg-rose-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-colors"
                                         aria-label="Eliminar abono"
                                         title="Eliminar Abono"
                                       >

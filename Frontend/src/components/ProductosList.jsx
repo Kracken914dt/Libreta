@@ -127,7 +127,7 @@ export default function ProductosList({
                     <div className="flex items-center gap-1 ml-1 pl-1 border-l border-slate-200 dark:border-slate-800">
                       <button
                         onClick={() => onEditCategoria(cat)}
-                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
                         aria-label={`Editar categoría ${cat.nombre}`}
                         title="Editar"
                       >
@@ -135,7 +135,7 @@ export default function ProductosList({
                       </button>
                       <button
                         onClick={() => onRequestDeleteCategoria(cat)}
-                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-rose-500"
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
                         aria-label={`Eliminar categoría ${cat.nombre}`}
                         title="Eliminar"
                       >
@@ -181,12 +181,12 @@ export default function ProductosList({
         {/* Barra de búsqueda */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-3.5 text-slate-400 dark:text-slate-500" size={16} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Buscar por nombre o descripción..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus:border-violet-500 transition-all shadow-sm"
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all shadow-sm"
           />
         </div>
         
@@ -336,7 +336,7 @@ export default function ProductosList({
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-900 flex justify-end gap-1.5">
                     <button
                       onClick={() => onEditProducto(p)}
-                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-xl border border-slate-200 dark:border-slate-800 transition-all"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-xl border border-slate-200 dark:border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                       aria-label="Editar producto"
                       title="Editar Producto"
                     >
@@ -344,7 +344,7 @@ export default function ProductosList({
                     </button>
                     <button
                       onClick={() => onRequestDeleteProducto(p)}
-                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-xl border border-slate-200 dark:border-slate-800 transition-all"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 rounded-xl border border-slate-200 dark:border-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-all"
                       aria-label="Eliminar producto"
                       title="Eliminar Producto"
                     >

@@ -84,37 +84,37 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Nombre Completo *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               required
               placeholder="Ej. Juan Pérez"
               value={nombre}
               onChange={(e) => setNombre(formatNameInput(e.target.value))}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Cédula / ID</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Ej. 1023456"
                 value={cedula}
                 onChange={(e) => setCedula(formatDigitsInput(e.target.value, 10))}
                 onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Celular / Teléfono</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Ej. 3124567890"
                 value={telefono}
                 onChange={(e) => setTelefono(formatDigitsInput(e.target.value, 10))}
                 onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
           </div>
