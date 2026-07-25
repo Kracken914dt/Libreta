@@ -30,6 +30,9 @@ const MOCK_CATEGORIAS = [
   { id: 'cat2', nombre: 'Calzado', color: '#f59e0b', created_at: new Date().toISOString() },
   { id: 'cat3', nombre: 'Accesorios', color: '#10b981', created_at: new Date().toISOString() },
   { id: 'cat4', nombre: 'Hogar', color: '#3b82f6', created_at: new Date().toISOString() },
+  { id: 'cat_oro',    nombre: 'Oro',    color: '#FFD700', created_at: new Date().toISOString() },
+  { id: 'cat_plata',  nombre: 'Plata',  color: '#C0C0C0', created_at: new Date().toISOString() },
+  { id: 'cat_bronce', nombre: 'Bronce', color: '#CD7F32', created_at: new Date().toISOString() },
 ];
 
 const MOCK_PRODUCTOS = [
@@ -195,6 +198,29 @@ export const AppProvider = ({ children }) => {
           setAbonos(dbAbonos || []);
           setCategorias(dbCategorias);
           setProductos(dbProductos);
+
+          // Seed joyería categories (Oro/Plata/Bronce) for users pre-migración
+          // (the SQL trigger covers NEW users; this fallback covers existing users
+          // that may have an empty categorias_productos table).
+          if (!dbCategorias || dbCategorias.length === 0) {
+            try {
+              const { data: seeded, error: seedError } = await supabase
+                .from('categorias_productos')
+                .insert([
+                  { nombre: 'Oro',    color: '#FFD700' },
+                  { nombre: 'Plata',  color: '#C0C0C0' },
+                  { nombre: 'Bronce', color: '#CD7F32' },
+                ])
+                .select();
+              if (seedError) {
+                console.warn('No se pudieron sembrar categorías de joyería:', seedError.message);
+              } else if (seeded) {
+                setCategorias(prev => [...prev, ...seeded].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+              }
+            } catch (seedEx) {
+              console.warn('Excepción al sembrar categorías de joyería:', seedEx);
+            }
+          }
         }
       } catch (error) {
         console.error('Excepción al cargar datos de Supabase. Cayendo a modo demo.', error);
@@ -224,6 +250,22 @@ export const AppProvider = ({ children }) => {
       if (localCategorias && localProductos) {
         setCategorias(JSON.parse(localCategorias));
         setProductos(JSON.parse(localProductos));
+        // Seed joyería categories for demo users with pre-existing localStorage
+        const catsArr = JSON.parse(localCategorias);
+        const joyNames = ['Oro', 'Plata', 'Bronce'];
+        const missing = joyNames.filter(n => !catsArr.some(c => c.nombre.toLowerCase() === n.toLowerCase()));
+        if (missing.length > 0) {
+          const joyColores = { 'Oro': '#FFD700', 'Plata': '#C0C0C0', 'Bronce': '#CD7F32' };
+          const seed = missing.map((n, i) => ({
+            id: 'cat_seed_' + n.toLowerCase() + '_' + i,
+            nombre: n,
+            color: joyColores[n],
+            created_at: new Date().toISOString()
+          }));
+          const merged = [...catsArr, ...seed];
+          setCategorias(merged);
+          localStorage.setItem('demo_categorias', JSON.stringify(merged));
+        }
       } else {
         setCategorias(MOCK_CATEGORIAS);
         setProductos(MOCK_PRODUCTOS);
