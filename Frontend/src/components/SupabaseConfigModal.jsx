@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Database, Info, Copy, Check, AlertTriangle } from 'lucide-react';
 import { getSupabaseConfig } from '../supabaseClient';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function SupabaseConfigModal({ isOpen, onClose }) {
   const { mode, saveCredentials, clearCredentials, isConfigured, showConfirm } = useApp();
   const currentConfig = getSupabaseConfig();
-  
+
   const [url, setUrl] = useState(currentConfig.url);
   const [anonKey, setAnonKey] = useState(currentConfig.anonKey);
   const [showSql, setShowSql] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const modalRef = useRef(null);
+  const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
 
   if (!isOpen) return null;
 
@@ -127,7 +130,13 @@ EXECUTE FUNCTION recalcular_estado_prestamo();
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col shadow-2xl animate-slide-up max-h-[90vh]">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col shadow-2xl animate-slide-up max-h-[90vh]"
+      >
         {/* Encabezado */}
         <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/20">
           <div className="flex items-center gap-2.5">
@@ -135,7 +144,7 @@ EXECUTE FUNCTION recalcular_estado_prestamo();
               <Database size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Configuración de Base de Datos</h2>
+              <h2 id={titleId} className="text-lg font-bold text-white">Configuración de Base de Datos</h2>
               <p className="text-xs text-slate-400">Conecta tu propia base de datos Supabase</p>
             </div>
           </div>

@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function ConfirmDeleteModal({ isOpen, title, message, itemName, onConfirm, onClose }) {
+  const modalRef = useRef(null);
+  const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up"
+      >
         {/* Botón cerrar */}
         <button 
           onClick={onClose}
@@ -21,7 +31,7 @@ export default function ConfirmDeleteModal({ isOpen, title, message, itemName, o
             <AlertTriangle size={24} />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+            <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               ¿Estás seguro de que deseas eliminar a{' '}
               <strong className="text-rose-600 dark:text-rose-400 font-semibold">{itemName}</strong>?

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Edit3 } from 'lucide-react';
-import { 
-  handleNumberKeyDown, 
-  formatMontoInput 
+import {
+  handleNumberKeyDown,
+  formatMontoInput
 } from '../utils/validation';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
   const { clientes, updatePrestamo, showAlert } = useApp();
@@ -14,6 +15,8 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
   const [notas, setNotas] = useState('');
   const [fechaPrestamo, setFechaPrestamo] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const modalRef = useRef(null);
+  const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
 
   useEffect(() => {
     if (prestamo) {
@@ -62,7 +65,13 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up max-h-[90vh] overflow-y-auto"
+      >
         {/* Botón cerrar */}
         <button 
           onClick={onClose}
@@ -77,7 +86,7 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
             <Edit3 size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Editar Préstamo</h2>
+            <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-white">Editar Préstamo</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Modifica el fiado para <strong className="text-violet-600 dark:text-violet-400">{cliente?.nombre || 'Cliente'}</strong></p>
           </div>
         </div>

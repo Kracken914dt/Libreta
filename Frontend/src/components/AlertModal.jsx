@@ -1,13 +1,17 @@
-import React from 'react';
-import { 
-  AlertTriangle, 
-  XCircle, 
-  Info, 
+import React, { useRef } from 'react';
+import {
+  AlertTriangle,
+  XCircle,
+  Info,
   HelpCircle,
-  X 
+  X
 } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function AlertModal({ isOpen, alertConfig, onClose }) {
+  const modalRef = useRef(null);
+  const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
+
   if (!isOpen || !alertConfig) return null;
 
   const { title, message, type, onConfirm } = alertConfig;
@@ -38,7 +42,13 @@ export default function AlertModal({ isOpen, alertConfig, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[99] flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative animate-slide-up">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative animate-slide-up"
+      >
         {/* Botón cerrar esquina */}
         <button 
           onClick={onClose}
@@ -53,7 +63,7 @@ export default function AlertModal({ isOpen, alertConfig, onClose }) {
             {icon}
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+            <h3 id={titleId} className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
               {title}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed whitespace-pre-line">

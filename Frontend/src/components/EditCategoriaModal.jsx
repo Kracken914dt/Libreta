@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Tag } from 'lucide-react';
 import { formatNameInput } from '../utils/validation';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 const PRESETS_COLORS = [
   '#8b5cf6', // Violeta
@@ -19,6 +20,8 @@ export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
   const [nombre, setNombre] = useState('');
   const [color, setColor] = useState(PRESETS_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
+  const modalRef = useRef(null);
+  const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
 
   useEffect(() => {
     if (categoria) {
@@ -53,7 +56,13 @@ export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative animate-slide-up">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 relative animate-slide-up"
+      >
         {/* Botón Cerrar */}
         <button 
           onClick={onClose}
@@ -71,7 +80,7 @@ export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
             <Tag size={18} />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            <h2 id={titleId} className="text-base font-bold text-slate-900 dark:text-white">
               {categoria ? 'Editar Categoría' : 'Nueva Categoría'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">

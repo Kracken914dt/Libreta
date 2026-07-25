@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Package, Image as ImageIcon, Coins } from 'lucide-react';
-import { 
-  handleNumberKeyDown, 
-  formatNameInput, 
-  formatMontoInput, 
-  formatGramosInput 
+import {
+  handleNumberKeyDown,
+  formatNameInput,
+  formatMontoInput,
+  formatGramosInput
 } from '../utils/validation';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function EditProductoModal({ isOpen, onClose, producto }) {
   const { categorias, addProducto, updateProducto, showAlert } = useApp();
@@ -22,6 +23,8 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
   const [costoPorGramo, setCostoPorGramo] = useState('');
   const [precioPorGramo, setPrecioPorGramo] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const modalRef = useRef(null);
+  const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
 
   useEffect(() => {
     if (producto) {
@@ -103,7 +106,13 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-slide-up max-h-[90vh] overflow-y-auto"
+      >
         {/* Botón Cerrar */}
         <button 
           onClick={onClose}
@@ -118,7 +127,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             <Package size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-white">
               {producto ? 'Editar Producto' : 'Registrar Producto'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
