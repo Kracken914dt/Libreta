@@ -284,7 +284,6 @@ export function HistorialClienteModal({
             )}
           </div>
         </div>
-      </div>
 
       {/* Todos los Abonos - full width (R-hist-2, R-hist-5)
           Sibling del body overflow, dentro del modal container: la tabla es visible
@@ -340,6 +339,7 @@ export function HistorialClienteModal({
             </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
