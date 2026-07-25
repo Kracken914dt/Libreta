@@ -10,7 +10,8 @@ import {
   AlertTriangle,
   FolderPlus,
   Eye,
-  X
+  X,
+  Coins
 } from 'lucide-react';
 
 export default function ProductosList({ 
@@ -33,6 +34,14 @@ export default function ProductosList({
       currency: 'COP',
       minimumFractionDigits: 0
     }).format(val);
+  };
+
+  // Formatear gramos: "5.2", "10", "3.567" (sin padding trailing zero)
+  const formatGramos = (val) => {
+    if (val == null || isNaN(val)) return '';
+    const n = parseFloat(val);
+    const fixed = n.toFixed(3);
+    return fixed.replace(/\.?0+$/, '') || '0';
   };
 
   // Filtrado de productos
@@ -220,6 +229,12 @@ export default function ProductosList({
             const cat = categorias.find(c => c.id === p.categoria_id);
             const isOutOfStock = p.stock === 0;
             const isLowStock = p.stock > 0 && p.stock <= 5;
+            // Joyería: ganancia derivada, never persisted
+            const pg = p.peso_gramos != null ? parseFloat(p.peso_gramos) : null;
+            const cg = p.costo_por_gramo != null ? parseFloat(p.costo_por_gramo) : null;
+            const vg = p.precio_por_gramo != null ? parseFloat(p.precio_por_gramo) : null;
+            const ganancia = (pg != null && cg != null && vg != null) ? (vg - cg) * pg : null;
+            const showJewelryLine = pg != null || p.largo != null;
             
             return (
               <div 
@@ -278,6 +293,23 @@ export default function ProductosList({
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                         {p.descripcion}
                       </p>
+                    )}
+
+                    {/* Línea joyería: peso + largo */}
+                    {showJewelryLine && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
+                        {pg != null && <span className="font-bold text-slate-700 dark:text-slate-300">{formatGramos(pg)}g</span>}
+                        {pg != null && p.largo != null && <span className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>}
+                        {p.largo != null && <span>{parseFloat(p.largo)}cm</span>}
+                      </p>
+                    )}
+
+                    {/* Badge de ganancia estimada (derivada, no persistida) */}
+                    {ganancia != null && (
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-500/20">
+                        <Coins size={10} />
+                        Ganancia {formatCurrency(ganancia)}
+                      </div>
                     )}
                   </div>
                   

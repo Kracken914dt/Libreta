@@ -36,12 +36,15 @@ const MOCK_CATEGORIAS = [
 ];
 
 const MOCK_PRODUCTOS = [
-  { id: 'prod1', nombre: 'Camisa Polo', descripcion: 'Camisa polo manga corta, algodón 100%', precio: 85000, stock: 12, imagen_url: '', categoria_id: 'cat1', created_at: new Date().toISOString() },
-  { id: 'prod2', nombre: 'Jeans Clásico', descripcion: 'Pantalón jean corte recto', precio: 95000, stock: 8, imagen_url: '', categoria_id: 'cat1', created_at: new Date().toISOString() },
-  { id: 'prod3', nombre: 'Zapatos Deportivos', descripcion: 'Tenis deportivos para correr', precio: 250000, stock: 5, imagen_url: '', categoria_id: 'cat2', created_at: new Date().toISOString() },
-  { id: 'prod4', nombre: 'Sandalias Cuero', descripcion: 'Sandalias artesanales de cuero', precio: 120000, stock: 3, imagen_url: '', categoria_id: 'cat2', created_at: new Date().toISOString() },
-  { id: 'prod5', nombre: 'Reloj Casual', descripcion: 'Reloj analógico resistente al agua', precio: 180000, stock: 2, imagen_url: '', categoria_id: 'cat3', created_at: new Date().toISOString() },
-  { id: 'prod6', nombre: 'Juego de Sábanas', descripcion: 'Sábanas queen, 200 hilos', precio: 150000, stock: 6, imagen_url: '', categoria_id: 'cat4', created_at: new Date().toISOString() },
+  { id: 'prod1', nombre: 'Camisa Polo', descripcion: 'Camisa polo manga corta, algodón 100%', precio: 85000, stock: 12, imagen_url: '', categoria_id: 'cat1', peso_gramos: null, largo: null, costo_por_gramo: null, precio_por_gramo: null, created_at: new Date().toISOString() },
+  { id: 'prod2', nombre: 'Jeans Clásico', descripcion: 'Pantalón jean corte recto', precio: 95000, stock: 8, imagen_url: '', categoria_id: 'cat1', peso_gramos: null, largo: null, costo_por_gramo: null, precio_por_gramo: null, created_at: new Date().toISOString() },
+  { id: 'prod3', nombre: 'Zapatos Deportivos', descripcion: 'Tenis deportivos para correr', precio: 250000, stock: 5, imagen_url: '', categoria_id: 'cat2', peso_gramos: null, largo: null, costo_por_gramo: null, precio_por_gramo: null, created_at: new Date().toISOString() },
+  { id: 'prod4', nombre: 'Sandalias Cuero', descripcion: 'Sandalias artesanales de cuero', precio: 120000, stock: 3, imagen_url: '', categoria_id: 'cat2', peso_gramos: null, largo: null, costo_por_gramo: null, precio_por_gramo: null, created_at: new Date().toISOString() },
+  { id: 'prod5', nombre: 'Reloj Casual', descripcion: 'Reloj analógico resistente al agua', precio: 180000, stock: 2, imagen_url: '', categoria_id: 'cat3', peso_gramos: null, largo: null, costo_por_gramo: null, precio_por_gramo: null, created_at: new Date().toISOString() },
+  { id: 'prod6', nombre: 'Juego de Sábanas', descripcion: 'Sábanas queen, 200 hilos', precio: 150000, stock: 6, imagen_url: '', categoria_id: 'cat4', peso_gramos: null, largo: null, costo_por_gramo: null, precio_por_gramo: null, created_at: new Date().toISOString() },
+  // Joyería seed: shows the new fields populated so the UI demos the feature out of the box
+  { id: 'prod7', nombre: 'Anillo de Oro 18k', descripcion: 'Anillo clásico en oro 18 kilates', precio: 624000, stock: 3, imagen_url: '', categoria_id: 'cat_oro', peso_gramos: 5.2, largo: 18, costo_por_gramo: 80000, precio_por_gramo: 120000, created_at: new Date().toISOString() },
+  { id: 'prod8', nombre: 'Cadena de Plata 925', descripcion: 'Cadena fina en plata 925', precio: 85000, stock: 5, imagen_url: '', categoria_id: 'cat_plata', peso_gramos: 12.5, largo: 50, costo_por_gramo: 3500, precio_por_gramo: 6800, created_at: new Date().toISOString() },
 ];
 
 export const AppProvider = ({ children }) => {
@@ -185,7 +188,10 @@ export const AppProvider = ({ children }) => {
         } catch (e) { /* tabla no existe todavía */ }
         
         try {
-          const { data: prodData } = await supabase.from('productos').select('*').order('nombre');
+          const { data: prodData } = await supabase
+            .from('productos')
+            .select('id, nombre, descripcion, precio, stock, imagen_url, categoria_id, peso_gramos, largo, costo_por_gramo, precio_por_gramo')
+            .order('nombre');
           dbProductos = prodData || [];
         } catch (e) { /* tabla no existe todavía */ }
 
@@ -787,12 +793,23 @@ export const AppProvider = ({ children }) => {
   // =========================================================================
   // ACCIONES: PRODUCTOS
   // =========================================================================
-  const addProducto = async ({ nombre, descripcion, precio, stock, imagen_url, categoria_id }) => {
+  const addProducto = async ({ nombre, descripcion, precio, stock, imagen_url, categoria_id, peso_gramos, largo, costo_por_gramo, precio_por_gramo }) => {
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('productos')
-        .insert([{ nombre, descripcion, precio: parseFloat(precio), stock: parseInt(stock), imagen_url, categoria_id: categoria_id || null }])
+        .insert([{
+          nombre,
+          descripcion,
+          precio: parseFloat(precio),
+          stock: parseInt(stock),
+          imagen_url,
+          categoria_id: categoria_id || null,
+          peso_gramos,
+          largo,
+          costo_por_gramo,
+          precio_por_gramo,
+        }])
         .select();
       if (error) throw error;
       setProductos(prev => [...prev, data[0]].sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -806,6 +823,10 @@ export const AppProvider = ({ children }) => {
         stock: parseInt(stock),
         imagen_url,
         categoria_id: categoria_id || null,
+        peso_gramos,
+        largo,
+        costo_por_gramo,
+        precio_por_gramo,
         created_at: new Date().toISOString()
       };
       setProductos(prev => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -813,19 +834,41 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const updateProducto = async (id, { nombre, descripcion, precio, stock, imagen_url, categoria_id }) => {
+  const updateProducto = async (id, { nombre, descripcion, precio, stock, imagen_url, categoria_id, peso_gramos, largo, costo_por_gramo, precio_por_gramo }) => {
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('productos')
-        .update({ nombre, descripcion, precio: parseFloat(precio), stock: parseInt(stock), imagen_url, categoria_id: categoria_id || null })
+        .update({
+          nombre,
+          descripcion,
+          precio: parseFloat(precio),
+          stock: parseInt(stock),
+          imagen_url,
+          categoria_id: categoria_id || null,
+          peso_gramos,
+          largo,
+          costo_por_gramo,
+          precio_por_gramo,
+        })
         .eq('id', id)
         .select();
       if (error) throw error;
       setProductos(prev => prev.map(p => p.id === id ? data[0] : p).sort((a, b) => a.nombre.localeCompare(b.nombre)));
       return data[0];
     } else {
-      const updated = { nombre, descripcion, precio: parseFloat(precio), stock: parseInt(stock), imagen_url, categoria_id: categoria_id || null };
+      const updated = {
+        nombre,
+        descripcion,
+        precio: parseFloat(precio),
+        stock: parseInt(stock),
+        imagen_url,
+        categoria_id: categoria_id || null,
+        peso_gramos,
+        largo,
+        costo_por_gramo,
+        precio_por_gramo,
+      };
       setProductos(prev => prev.map(p => p.id === id ? { ...p, ...updated } : p).sort((a, b) => a.nombre.localeCompare(b.nombre)));
       return { id, ...updated };
     }
