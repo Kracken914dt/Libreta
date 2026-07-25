@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Search, 
@@ -13,8 +13,10 @@ import {
   ChevronRight, 
   X,
   History,
-  DollarSign
+  DollarSign,
+  FileDown
 } from 'lucide-react';
+import { exportarCuentaCobroPDF } from '../utils/pdfCliente';
 
 export default function ClientesList({ 
   setOpenNewCliente, 
@@ -25,9 +27,10 @@ export default function ClientesList({
   onEditCliente, 
   onRequestDeleteCliente 
 }) {
-  const { clientes, prestamos, abonos, loading } = useApp();
+  const { clientes, prestamos, abonos, user, loading, showAlert } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCliente, setSelectedCliente] = useState(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   // Formateador de moneda
   const formatCurrency = (value) => {
@@ -94,6 +97,36 @@ export default function ClientesList({
     
     return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
   };
+
+  // Handler unificado de export PDF (T7): dispara desde card y desde drawer.
+  // Snapshot deep-clone en el momento del click (Gap #4) — useCallback memoiza
+  // para que el mismo handler se reuse entre mounts y no rompa equality.
+  const handleExportPdf = useCallback(async (clienteId) => {
+    const cliente = clientes.find(c => c.id === clienteId);
+    if (!cliente) return;
+    setExportingPdf(true);
+    try {
+      const prestamosDelCliente = prestamos.filter(p => p.cliente_id === clienteId);
+      const abonosPorPrestamo = Object.fromEntries(
+        prestamosDelCliente.map(p => [p.id, abonos.filter(a => a.prestamo_id === p.id)])
+      );
+      const snapshot = JSON.parse(JSON.stringify({
+        cliente,
+        prestamos: prestamosDelCliente,
+        abonosPorPrestamo,
+        user,
+        isoTimestamp: new Date().toISOString(),
+      }));
+      await exportarCuentaCobroPDF(snapshot);
+    } catch (err) {
+      console.error('Error exportando PDF:', err);
+      if (typeof showAlert === 'function') {
+        showAlert('No se pudo generar el PDF: ' + (err.message || err), 'Error al exportar', 'error');
+      }
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [clientes, prestamos, abonos, user, showAlert]);
 
   // Filtrar clientes
   const filteredClientes = clientes.filter(c => {
@@ -185,6 +218,16 @@ export default function ClientesList({
 
                 <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
+                    {/* Botón Exportar PDF */}
+                    <button
+                      onClick={() => handleExportPdf(cliente.id)}
+                      disabled={exportingPdf}
+                      title="Exportar estado de cuenta en PDF"
+                      className="p-2 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 rounded-lg border border-violet-500/20 transition-all disabled:opacity-50"
+                    >
+                      <FileDown size={16} />
+                    </button>
+
                     {/* Botón WhatsApp */}
                     {waLink ? (
                       <a 
@@ -258,12 +301,23 @@ export default function ClientesList({
                     C.C. {selectedCliente.cedula || 'No registrada'} | Tel: {selectedCliente.telefono || 'No registrado'}
                   </p>
                 </div>
-                <button 
-                  onClick={() => setSelectedCliente(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleExportPdf(selectedCliente.id)}
+                    disabled={exportingPdf}
+                    title="Exportar estado de cuenta en PDF"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-semibold rounded-lg border border-violet-500/20 transition-all disabled:opacity-50"
+                  >
+                    <FileDown size={14} />
+                    Exportar PDF
+                  </button>
+                  <button 
+                    onClick={() => setSelectedCliente(null)}
+                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               {/* Contenido Scrollable */}
