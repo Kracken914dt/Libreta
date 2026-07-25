@@ -251,9 +251,12 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
         </div>
 
         {/* Total Cobrado */}
-        <div 
+        <button
+          type="button"
           onClick={() => setShowRecaudoModal(true)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-teal-950/20 hover:border-teal-500/50 cursor-pointer group"
+          aria-label="Ver historial de recaudo"
+          aria-haspopup="dialog"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-teal-950/20 hover:border-teal-500/50 cursor-pointer group text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
           title="Click para ver historial detallado"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-teal-600/5 dark:bg-teal-600/10 rounded-full blur-2xl group-hover:bg-teal-600/15 dark:group-hover:bg-teal-600/20 transition-all duration-300"></div>
@@ -270,7 +273,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
               <span className="text-[10px] bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold px-2 py-0.5 rounded border border-teal-500/25">Ver detalle</span>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Deudores Activos */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-amber-950/20 group">
