@@ -17,6 +17,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { exportarCuentaCobroPDF } from '../utils/pdfCliente';
+import HistorialClienteModal from './HistorialClienteModal';
 
 export default function ClientesList({ 
   setOpenNewCliente, 
@@ -127,6 +128,25 @@ export default function ClientesList({
       setExportingPdf(false);
     }
   }, [clientes, prestamos, abonos, user, showAlert]);
+
+  // Handlers que invocan el modal siguiente (R-hist-2, R-hist-11):
+  // cierran el HistorialClienteModal ANTES de abrir el nuevo modal para evitar
+  // stacking (doble scroll-lock, doble focus trap, doble z-index).
+  const handleCrearPrestamo = (cliente) => {
+    setSelectedCliente(null);
+    setSelectedClienteForPrestamo(cliente);
+    setOpenNewPrestamo(true);
+  };
+
+  const handleAbonar = (cliente) => {
+    const clientePrestamos = prestamos.filter(p => p.cliente_id === cliente.id);
+    const primerPendiente = clientePrestamos.find(p => p.estado === 'pendiente');
+    if (primerPendiente) {
+      setSelectedCliente(null);
+      setSelectedPrestamoForAbono(primerPendiente);
+      setOpenNewAbono(true);
+    }
+  };
 
   // Filtrar clientes
   const filteredClientes = clientes.filter(c => {
@@ -288,187 +308,18 @@ export default function ClientesList({
         </div>
       )}
 
-      {/* PANEL DE HISTORIAL DETALLADO (DRAWER/OVERLAY MODAL) */}
-      {selectedCliente && (() => {
-        const stats = getClienteStats(selectedCliente.id);
-        const clientePrestamos = prestamos.filter(p => p.cliente_id === selectedCliente.id);
-
-        return (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 flex justify-end animate-fade-in">
-            <div className="absolute inset-0" onClick={() => setSelectedCliente(null)}></div>
-            
-            <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl z-50 animate-slide-up">
-              {/* Encabezado Drawer */}
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedCliente.nombre}</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    C.C. {selectedCliente.cedula || 'No registrada'} | Tel: {selectedCliente.telefono || 'No registrado'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleExportPdf(selectedCliente.id)}
-                    disabled={exportingPdf}
-                    aria-label="Exportar historial completo en PDF"
-                    title={`Exportar PDF · Estado de cuenta al ${new Date().toLocaleString('es-CO')}`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/5 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 text-xs font-semibold rounded-lg border border-violet-500/20 transition-all disabled:opacity-50"
-                  >
-                    <FileDown size={14} />
-                    Exportar PDF
-                  </button>
-                  <button
-                    onClick={() => setSelectedCliente(null)}
-                    aria-label="Cerrar"
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-colors"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Contenido Scrollable */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Resumen Financiero del Cliente */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Total Fiado</span>
-                    <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(stats.totalFiado)}</p>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Total Abonado</span>
-                    <p className="text-lg font-bold text-teal-600 dark:text-teal-400 mt-1">{formatCurrency(stats.totalAbonado)}</p>
-                  </div>
-                  <div className="bg-rose-500/[0.02] dark:bg-rose-500/[0.01] p-4 rounded-xl border border-rose-500/20">
-                    <span className="text-[10px] uppercase font-bold text-rose-500 dark:text-rose-300">Deuda Activa</span>
-                    <p className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(stats.deudaActiva)}</p>
-                  </div>
-                </div>
-
-                {/* Acciones Rápidas del Cliente */}
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => {
-                      setSelectedClienteForPrestamo(selectedCliente);
-                      setOpenNewPrestamo(true);
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-violet-600 hover:bg-violet-500 text-white font-medium text-xs rounded-lg transition-all"
-                  >
-                    <PlusCircle size={16} />
-                    Fiar Producto
-                  </button>
-                  {stats.deudaActiva > 0 && (
-                    <button 
-                      onClick={() => {
-                        const primerPendiente = clientePrestamos.find(p => p.estado === 'pendiente');
-                        if (primerPendiente) {
-                          setSelectedPrestamoForAbono(primerPendiente);
-                          setOpenNewAbono(true);
-                        }
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs rounded-lg transition-all"
-                    >
-                      <DollarSign size={16} />
-                      Abonar Deuda
-                    </button>
-                  )}
-                </div>
-
-                {/* Historial de Préstamos / Fiados */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    <History size={16} />
-                    Historial de Préstamos y Fiados
-                  </h3>
-                  {clientePrestamos.length === 0 ? (
-                    <p className="text-slate-400 dark:text-slate-500 text-sm py-4 text-center">Este cliente no registra ningún fiado.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {clientePrestamos.map((prestamo) => {
-                        const abonosPrestamo = abonos.filter(a => a.prestamo_id === prestamo.id);
-                        const totalAbonadoPrestamo = abonosPrestamo.reduce((sum, a) => sum + a.monto, 0);
-                        const saldoRestante = prestamo.estado === 'devuelto' ? 0 : (prestamo.precio_total - totalAbonadoPrestamo);
-
-                        return (
-                          <div 
-                            key={prestamo.id}
-                            className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-4 space-y-3"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="font-semibold text-slate-900 dark:text-white text-sm">{prestamo.producto}</h4>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{formatDate(prestamo.fecha_prestamo)}</p>
-                              </div>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                prestamo.estado === 'pagado'
-                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                  : prestamo.estado === 'devuelto'
-                                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                                  : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                              }`}>
-                                {prestamo.estado === 'pagado' ? 'PAGADO' : (prestamo.estado === 'devuelto' ? 'DEVUELTO' : 'PENDIENTE')}
-                              </span>
-                            </div>
-
-                            {/* Detalle de montos */}
-                            <div className="grid grid-cols-3 gap-2 text-xs py-2 bg-slate-100/50 dark:bg-slate-900/40 rounded-lg px-3">
-                              <div>
-                                <span className="text-[10px] text-slate-500 block">Total</span>
-                                <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(prestamo.precio_total)}</span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 block">Abonado</span>
-                                <span className="font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(totalAbonadoPrestamo)}</span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-slate-500 block">Restante</span>
-                                <span className={`font-semibold ${saldoRestante > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                                  {formatCurrency(saldoRestante)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {prestamo.dias_pago_sugeridos && (
-                              <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                                📅 <strong>Días de Pago:</strong> {prestamo.dias_pago_sugeridos}
-                              </p>
-                            )}
-
-                            {prestamo.notas && (
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                                📝 <strong>Nota:</strong> {prestamo.notas}
-                              </p>
-                            )}
-
-                            {/* Historial de abonos para este préstamo específico */}
-                            {abonosPrestamo.length > 0 && (
-                              <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800/40">
-                                <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">Abonos realizados:</span>
-                                <div className="space-y-1">
-                                  {abonosPrestamo.map((abono) => (
-                                    <div key={abono.id} className="flex justify-between items-center text-[11px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/30 p-1.5 rounded">
-                                      <div>
-                                        <span className="font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</span>
-                                        {abono.notes && <span className="text-slate-500 italic ml-2">({abono.notes})</span>}
-                                        {abono.notas && <span className="text-slate-500 dark:text-slate-400 italic ml-2">({abono.notas})</span>}
-                                      </div>
-                                      <span className="text-slate-400 dark:text-slate-500 text-[10px]">{formatDate(abono.fecha_abono)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* HistorialClienteModal — modal centrado, reemplaza el drawer lateral (R-hist-10, R-hist-11) */}
+      <HistorialClienteModal
+        isOpen={!!selectedCliente}
+        onClose={() => setSelectedCliente(null)}
+        cliente={selectedCliente}
+        prestamos={prestamos}
+        abonos={abonos}
+        user={user}
+        onExportPdf={handleExportPdf}
+        onCrearPrestamo={handleCrearPrestamo}
+        onAbonar={handleAbonar}
+      />
     </div>
   );
 }
