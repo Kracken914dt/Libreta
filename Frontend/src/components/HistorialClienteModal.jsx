@@ -285,6 +285,62 @@ export function HistorialClienteModal({
           </div>
         </div>
       </div>
+
+      {/* Todos los Abonos - full width (R-hist-2, R-hist-5)
+          Sibling del body overflow, dentro del modal container: la tabla es visible
+          al fondo, sin importar cuánto scrollee la lista de préstamos. max-h-[40vh]
+          evita que la tabla domine la pantalla cuando hay 200+ abonos. */}
+      <div className="flex-shrink-0 border-t border-slate-100 dark:border-slate-800 p-6 max-h-[40vh] overflow-y-auto">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 uppercase tracking-wide">
+          Todos los Abonos ({abonosCliente.length})
+        </h3>
+        {abonosCliente.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">No hay abonos registrados</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Fecha</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Monto</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Préstamo</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...abonosCliente]
+                  .sort((a, b) => {
+                    const fa = new Date(a.fecha_abono || a.fecha || 0).getTime();
+                    const fb = new Date(b.fecha_abono || b.fecha || 0).getTime();
+                    return fb - fa; // desc: más reciente primero
+                  })
+                  .map(abono => {
+                    const prestamo = prestamosCliente.find(p => p.id === abono.prestamo_id);
+                    const fechaAbono = abono.fecha_abono || abono.fecha;
+                    return (
+                      <tr key={abono.id} className="border-t border-slate-100 dark:border-slate-800">
+                        <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
+                          {fechaAbono ? new Date(fechaAbono).toLocaleDateString('es-CO') : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-right font-semibold text-teal-600 dark:text-teal-400">
+                          $ {formatMonto(abono.monto || 0)}
+                        </td>
+                        <td className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs">
+                          {prestamo
+                            ? new Date(prestamo.fecha_prestamo || prestamo.created_at).toLocaleDateString('es-CO')
+                            : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs">
+                          {abono.notas || '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
