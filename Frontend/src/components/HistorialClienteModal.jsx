@@ -171,11 +171,117 @@ export function HistorialClienteModal({
             </div>
           </div>
 
-          {/* RIGHT column — placeholder para C9 (lista de préstamos) */}
+          {/* RIGHT column — lista de préstamos con abonos anidados (R-hist-2) */}
           <div className="lg:col-span-2 space-y-4">
-            <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-              Préstamos se completa en C9
-            </p>
+            {prestamosCliente.length === 0 ? (
+              <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center">
+                <p className="text-slate-500 dark:text-slate-400 font-medium">
+                  Este cliente no tiene préstamos registrados
+                </p>
+              </div>
+            ) : (
+              prestamosCliente.map(prestamo => {
+                const abonosDelPrestamo = abonosPorPrestamo[prestamo.id] || [];
+                const abonadoDelPrestamo = abonosDelPrestamo.reduce((s, a) => s + (a.monto || 0), 0);
+                const saldoDelPrestamo = Math.max(0, (prestamo.precio_total || 0) - abonadoDelPrestamo);
+                const estado = prestamo.estado || 'pendiente';
+                const esDevuelto = estado === 'devuelto';
+                const esPagado = estado === 'pagado';
+
+                // productos_fiados: array | JSON-string | fallback (R-hist-2)
+                let productosLabel = 'Préstamo';
+                if (Array.isArray(prestamo.productos_fiados) && prestamo.productos_fiados.length > 0) {
+                  productosLabel = prestamo.productos_fiados.map(p => p.nombre).join(', ');
+                } else if (typeof prestamo.productos_fiados === 'string' && prestamo.productos_fiados.trim()) {
+                  try {
+                    const parsed = JSON.parse(prestamo.productos_fiados);
+                    if (Array.isArray(parsed) && parsed[0]?.nombre) {
+                      productosLabel = parsed.map(p => p.nombre).join(', ');
+                    }
+                  } catch { /* keep fallback */ }
+                } else if (typeof prestamo.producto === 'string' && prestamo.producto) {
+                  productosLabel = prestamo.producto;
+                }
+
+                // fecha_prestamo || created_at (defensivo: el schema usa fecha_prestamo)
+                const fechaPrestamo = prestamo.fecha_prestamo || prestamo.created_at;
+
+                return (
+                  <div
+                    key={prestamo.id}
+                    className={`border rounded-xl overflow-hidden ${
+                      esDevuelto
+                        ? 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700'
+                        : esPagado
+                        ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/50'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                    }`}
+                  >
+                    {/* Prestamo header */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold ${esDevuelto ? 'text-slate-500 dark:text-slate-400 line-through italic' : 'text-slate-900 dark:text-white'}`}>
+                            {productosLabel}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {fechaPrestamo ? new Date(fechaPrestamo).toLocaleDateString('es-CO') : '—'}
+                            {prestamo.dias_pago_sugeridos && ` · ${prestamo.dias_pago_sugeridos}`}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${
+                          esDevuelto
+                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                            : esPagado
+                            ? 'bg-emerald-200 dark:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200'
+                            : 'bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200'
+                        }`}>
+                          {esDevuelto ? 'Devuelto' : esPagado ? '✓ Pagado' : 'Pendiente'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 mt-3 text-xs">
+                        <div>
+                          <p className="text-slate-500 dark:text-slate-400">Total</p>
+                          <p className="font-bold text-slate-700 dark:text-slate-300">$ {formatMonto(prestamo.precio_total || 0)}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-500 dark:text-slate-400">Abonado</p>
+                          <p className="font-bold text-teal-600 dark:text-teal-400">$ {formatMonto(abonadoDelPrestamo)}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-500 dark:text-slate-400">Saldo</p>
+                          <p className={`font-bold ${saldoDelPrestamo > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+                            $ {formatMonto(saldoDelPrestamo)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Nested abonos (R-hist-2) */}
+                    {abonosDelPrestamo.length > 0 && (
+                      <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 p-3">
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">
+                          Abonos ({abonosDelPrestamo.length})
+                        </p>
+                        <ul className="space-y-1.5">
+                          {abonosDelPrestamo.map(abono => {
+                            const fechaAbono = abono.fecha_abono || abono.fecha;
+                            return (
+                              <li key={abono.id} className="flex items-center justify-between text-xs">
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  {fechaAbono ? new Date(fechaAbono).toLocaleDateString('es-CO') : '—'}
+                                  {abono.notas && ` · ${abono.notas}`}
+                                </span>
+                                <span className="font-semibold text-teal-600 dark:text-teal-400">$ {formatMonto(abono.monto || 0)}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
