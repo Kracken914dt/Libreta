@@ -58,6 +58,11 @@ export function HistorialClienteModal({
     .join('')
     .toUpperCase() || '?';
 
+  // Formateador de monto (Intl es-CO con separador de miles, sin símbolo de moneda;
+  // el "$" se concatena en el template). Mismo patrón que ClientesList.formatCurrency,
+  // sin la envoltura COP porque acá el prefijo se incluye explícito en el JSX.
+  const formatMonto = (value) => new Intl.NumberFormat('es-CO').format(value || 0);
+
   function handleBackdropClick(e) {
     if (e.target === e.currentTarget) onClose();
   }
@@ -109,11 +114,69 @@ export function HistorialClienteModal({
           </div>
         </div>
 
-        {/* Body (placeholder — se reemplaza por 2-col grid en C8/C9) */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <p className="text-slate-500 dark:text-slate-400 text-center py-8">
-            Contenido del modal — se completa en C8 (stats), C9 (préstamos) y C10 (tabla abonos)
-          </p>
+        {/* Body — 2-col grid (R-hist-1, R-hist-4) */}
+        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* LEFT column — sticky on lg+, 4 stat cards + 3 action buttons (R-hist-2) */}
+          <div className="lg:col-span-1 lg:sticky lg:top-0 lg:self-start space-y-4">
+            {/* 4 stat cards (2x2 grid) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/50 rounded-xl p-3">
+                <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide">Total Fiado</p>
+                <p className="text-lg font-bold text-violet-700 dark:text-violet-300 mt-1">$ {formatMonto(totalFiado)}</p>
+              </div>
+              <div className="bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/50 rounded-xl p-3">
+                <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide">Total Abonado</p>
+                <p className="text-lg font-bold text-teal-700 dark:text-teal-300 mt-1">$ {formatMonto(totalAbonado)}</p>
+              </div>
+              <div className={`${saldoAFavor > 0 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50' : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50'} border rounded-xl p-3`}>
+                <p className={`text-xs font-semibold uppercase tracking-wide ${saldoAFavor > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  {saldoAFavor > 0 ? 'Saldo a Favor' : 'Saldo Pendiente'}
+                </p>
+                <p className={`text-lg font-bold mt-1 ${saldoAFavor > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
+                  $ {formatMonto(saldoAFavor > 0 ? saldoAFavor : saldoPendiente)}
+                </p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Préstamos</p>
+                <p className="text-lg font-bold text-slate-700 dark:text-slate-300 mt-1">{totalPrestamos}</p>
+              </div>
+            </div>
+
+            {/* Action buttons (R-hist-2) */}
+            <div className="space-y-2">
+              <button
+                onClick={() => onCrearPrestamo(cliente)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+              >
+                <Plus size={16} /> Fiar Producto
+              </button>
+              {saldoPendiente > 0 && (
+                <button
+                  onClick={() => onAbonar(cliente)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                >
+                  <Minus size={16} /> Abonar Deuda
+                </button>
+              )}
+              {cliente.telefono && (
+                <a
+                  href={`https://wa.me/${cliente.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${cliente.nombre}, te recuerdo tu saldo pendiente en La Libreta Digital.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                >
+                  <MessageSquare size={16} /> Recordatorio WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT column — placeholder para C9 (lista de préstamos) */}
+          <div className="lg:col-span-2 space-y-4">
+            <p className="text-slate-500 dark:text-slate-400 text-center py-8">
+              Préstamos se completa en C9
+            </p>
+          </div>
         </div>
       </div>
     </div>
