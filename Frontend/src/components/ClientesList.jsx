@@ -293,12 +293,12 @@ export default function ClientesList({
                     </button>
                   </div>
 
-                  {/* Ver Ficha Detalle */}
+                  {/* Trigger: abre el HistorialClienteModal (R-hist-10) */}
                   <button 
                     onClick={() => setSelectedCliente(cliente)}
                     className="flex items-center gap-1 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 transition-colors py-1.5 px-3 rounded-lg hover:bg-violet-500/5"
                   >
-                    Ver Historial
+                    Ver Historial Completo
                     <ChevronRight size={16} />
                   </button>
                 </div>
