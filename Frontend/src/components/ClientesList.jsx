@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../hooks/useToast';
 import {
@@ -16,6 +16,8 @@ import {
 import { exportarCuentaCobroPDF } from '../utils/pdfCliente';
 import { getWhatsAppLink } from '../utils/validation';
 import HistorialClienteModal from './HistorialClienteModal';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '../constants/ui';
 
 export default function ClientesList({ 
   setOpenNewCliente, 
@@ -29,8 +31,15 @@ export default function ClientesList({
   const { clientes, prestamos, abonos, user, loading } = useApp();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [exportingPdf, setExportingPdf] = useState(false);
+
+  // Reset a página 1 cuando cambia la búsqueda (R-page-State).
+  // Functional update previene stale closure en race conditions (R-page-SearchComposition).
+  useEffect(() => {
+    setCurrentPage((prev) => 1);
+  }, [searchQuery]);
 
   // Formateador de moneda
   const formatCurrency = (value) => {
@@ -145,6 +154,16 @@ export default function ClientesList({
     );
   });
 
+  // Paginación client-side (R-page-Slice). safePage es defensivo contra
+  // currentPage stale (p.ej. tras un filtro que dejó 0 items en la página actual).
+  const totalItems = filteredClientes.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedClientes = filteredClientes.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
+
   return (
     <div className="space-y-6 animate-fade-in relative">
       {/* Encabezado e Input de búsqueda */}
@@ -184,8 +203,9 @@ export default function ClientesList({
             : "No se encontraron clientes que coincidan con la búsqueda."}
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClientes.map((cliente) => {
+          {paginatedClientes.map((cliente) => {
             const stats = getClienteStats(cliente.id);
             const waLink = getWhatsAppLink(cliente.telefono, cliente.nombre, stats.deudaActiva);
 
@@ -293,6 +313,14 @@ export default function ClientesList({
             );
           })}
         </div>
+        <Pagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+        </>
       )}
 
       {/* HistorialClienteModal — modal centrado, reemplaza el drawer lateral (R-hist-10, R-hist-11) */}
