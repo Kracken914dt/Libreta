@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../hooks/useToast';
 import { BookOpen, LayoutGrid, Database, AlertCircle } from 'lucide-react';
 
 const GoogleIcon = () => (
@@ -12,13 +13,19 @@ const GoogleIcon = () => (
 );
 
 export default function LoginScreen({ onSkip }) {
-  const { loginWithGoogle, isConfigured, showAlert } = useApp();
+  const { loginWithGoogle, isConfigured } = useApp();
+  const { showToast } = useToast();
 
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
     } catch (err) {
-      showAlert('Error en Google Login: ' + err.message + '\nAsegúrate de habilitar Google Auth Provider en tu panel de Supabase.', 'Error de autenticación', 'error');
+      showToast({
+        type: 'error',
+        title: 'Error de autenticación',
+        message: 'Error en Google Login: ' + err.message + '\nAsegúrate de habilitar Google Auth Provider en tu panel de Supabase.',
+        duration: 8000,
+      });
     }
   };
 

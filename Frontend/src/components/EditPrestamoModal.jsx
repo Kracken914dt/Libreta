@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../hooks/useToast';
 import { X, Edit3 } from 'lucide-react';
 import {
   handleNumberKeyDown,
@@ -8,7 +9,8 @@ import {
 import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
-  const { clientes, updatePrestamo, showAlert } = useApp();
+  const { clientes, updatePrestamo } = useApp();
+  const { showToast } = useToast();
   const [producto, setProducto] = useState('');
   const [precioTotal, setPrecioTotal] = useState('');
   const [diasPagoSugeridos, setDiasPagoSugeridos] = useState('');
@@ -57,7 +59,7 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
       });
       onClose();
     } catch (err) {
-      showAlert('Error al actualizar préstamo: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al actualizar préstamo: ' + err.message });
     } finally {
       setSubmitting(false);
     }

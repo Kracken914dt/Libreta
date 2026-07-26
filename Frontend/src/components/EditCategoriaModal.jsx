@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../hooks/useToast';
 import { X, Tag } from 'lucide-react';
 import { formatNameInput } from '../utils/validation';
 import { useModalA11y } from '../hooks/useModalA11y';
@@ -16,7 +17,8 @@ const PRESETS_COLORS = [
 ];
 
 export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
-  const { addCategoria, updateCategoria, showAlert } = useApp();
+  const { addCategoria, updateCategoria } = useApp();
+  const { showToast } = useToast();
   const [nombre, setNombre] = useState('');
   const [color, setColor] = useState(PRESETS_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
@@ -48,7 +50,7 @@ export default function EditCategoriaModal({ isOpen, onClose, categoria }) {
       }
       onClose();
     } catch (err) {
-      showAlert('Error al guardar categoría: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al guardar categoría: ' + err.message });
     } finally {
       setSubmitting(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../hooks/useToast';
 import { X, Package, Image as ImageIcon, Coins } from 'lucide-react';
 import {
   handleNumberKeyDown,
@@ -11,7 +12,8 @@ import {
 import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function EditProductoModal({ isOpen, onClose, producto }) {
-  const { categorias, addProducto, updateProducto, showAlert } = useApp();
+  const { categorias, addProducto, updateProducto } = useApp();
+  const { showToast } = useToast();
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
@@ -105,7 +107,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       }
       onClose();
     } catch (err) {
-      showAlert('Error al guardar producto: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al guardar producto: ' + err.message });
     } finally {
       setSubmitting(false);
     }

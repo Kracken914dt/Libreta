@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../hooks/useToast';
 import { X, User, Edit3 } from 'lucide-react';
 import {
   handleNumberKeyDown,
@@ -9,7 +10,8 @@ import {
 import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function EditClienteModal({ isOpen, onClose, cliente }) {
-  const { updateCliente, showAlert } = useApp();
+  const { updateCliente } = useApp();
+  const { showToast } = useToast();
   const [nombre, setNombre] = useState('');
   const [cedula, setCedula] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -32,12 +34,12 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
     if (!nombre.trim()) return;
 
     if (cedula && (cedula.length < 7 || cedula.length > 10)) {
-      showAlert('La cédula debe tener entre 7 y 10 dígitos.', 'Cédula inválida', 'warning');
+      showToast({ type: 'warning', title: 'Cédula inválida', message: 'La cédula debe tener entre 7 y 10 dígitos.' });
       return;
     }
 
     if (telefono && telefono.length !== 10) {
-      showAlert('El número de celular debe tener exactamente 10 dígitos.', 'Celular inválido', 'warning');
+      showToast({ type: 'warning', title: 'Celular inválido', message: 'El número de celular debe tener exactamente 10 dígitos.' });
       return;
     }
 
@@ -46,7 +48,7 @@ export default function EditClienteModal({ isOpen, onClose, cliente }) {
       await updateCliente(cliente.id, { nombre, cedula, telefono });
       onClose();
     } catch (err) {
-      showAlert('Error al actualizar cliente: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al actualizar cliente: ' + err.message });
     } finally {
       setSubmitting(false);
     }

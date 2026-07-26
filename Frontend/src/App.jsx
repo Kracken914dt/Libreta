@@ -14,6 +14,7 @@ import EditProductoModal from './components/EditProductoModal';
 import EditCategoriaModal from './components/EditCategoriaModal';
 import AlertModal from './components/AlertModal';
 import { ToastContainer } from './components/ToastContainer';
+import { useToast } from './hooks/useToast';
 import { 
   handleNumberKeyDown, 
   formatNameInput, 
@@ -38,16 +39,16 @@ import {
 } from 'lucide-react';
 
 function AppContent() {
-  const { 
-    mode, 
-    toggleMode, 
-    clientes, 
-    prestamos, 
+  const {
+    mode,
+    toggleMode,
+    clientes,
+    prestamos,
     productos,
     categorias,
-    addCliente, 
-    addPrestamo, 
-    addAbono, 
+    addCliente,
+    addPrestamo,
+    addAbono,
     deleteCliente,
     deletePrestamo,
     deleteAbono,
@@ -58,9 +59,9 @@ function AppContent() {
     logout,
     loading,
     alertConfig,
-    showAlert,
     closeAlert
   } = useApp();
+  const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -243,7 +244,7 @@ function AppContent() {
         await deleteCategoria(data.id);
       }
     } catch (err) {
-      showAlert(`Error al eliminar: ${err.message}`, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: `Error al eliminar: ${err.message}` });
     } finally {
       setDeleteTarget(null);
     }
@@ -255,12 +256,12 @@ function AppContent() {
     if (!newClienteData.nombre.trim()) return;
 
     if (newClienteData.cedula && (newClienteData.cedula.length < 7 || newClienteData.cedula.length > 10)) {
-      showAlert('La cédula debe tener entre 7 y 10 dígitos.', 'Cédula inválida', 'warning');
+      showToast({ type: 'warning', title: 'Cédula inválida', message: 'La cédula debe tener entre 7 y 10 dígitos.' });
       return;
     }
 
     if (newClienteData.telefono && newClienteData.telefono.length !== 10) {
-      showAlert('El número de celular debe tener exactamente 10 dígitos.', 'Celular inválido', 'warning');
+      showToast({ type: 'warning', title: 'Celular inválido', message: 'El número de celular debe tener exactamente 10 dígitos.' });
       return;
     }
 
@@ -270,7 +271,7 @@ function AppContent() {
       setNewClienteData({ nombre: '', cedula: '', telefono: '' });
       setOpenNewCliente(false);
     } catch (err) {
-      showAlert('Error al crear cliente: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al crear cliente: ' + err.message });
     } finally {
       setSubmitting(false);
     }
@@ -281,7 +282,7 @@ function AppContent() {
     e.preventDefault();
     if (isCustomProduct) {
       if (!customName.trim() || !customPrice) {
-        showAlert('Por favor especifica el nombre y precio del producto.', 'Campos incompletos', 'warning');
+        showToast({ type: 'warning', title: 'Campos incompletos', message: 'Por favor especifica el nombre y precio del producto.' });
         return;
       }
       const newItem = {
@@ -296,22 +297,22 @@ function AppContent() {
       setCurrentQty(1);
     } else {
       if (!selectedProductId) {
-        showAlert('Por favor selecciona un producto de la lista.', 'Producto requerido', 'warning');
+        showToast({ type: 'warning', title: 'Producto requerido', message: 'Por favor selecciona un producto de la lista.' });
         return;
       }
       const prod = productos.find(p => p.id === selectedProductId);
       if (!prod) return;
       if (prod.stock < currentQty) {
-        showAlert(`Stock insuficiente. Solo quedan ${prod.stock} unidades de este producto.`, 'Stock insuficiente', 'warning');
+        showToast({ type: 'warning', title: 'Stock insuficiente', message: `Stock insuficiente. Solo quedan ${prod.stock} unidades de este producto.` });
         return;
       }
-      
+
       const existingItemQty = productosAgregados
         .filter(item => item.id === selectedProductId)
         .reduce((sum, item) => sum + item.cantidad, 0);
-        
+
       if (prod.stock < (existingItemQty + parseInt(currentQty))) {
-        showAlert(`No puedes agregar más de la cantidad en stock. Ya tienes ${existingItemQty} agregados y el stock es ${prod.stock}.`, 'Stock insuficiente', 'warning');
+        showToast({ type: 'warning', title: 'Stock insuficiente', message: `No puedes agregar más de la cantidad en stock. Ya tienes ${existingItemQty} agregados y el stock es ${prod.stock}.` });
         return;
       }
 
@@ -332,11 +333,11 @@ function AppContent() {
     e.preventDefault();
     const clienteId = selectedClienteForPrestamo?.id || newPrestamoData.cliente_id;
     if (!clienteId) {
-      showAlert('Por favor selecciona un cliente.', 'Cliente requerido', 'warning');
+      showToast({ type: 'warning', title: 'Cliente requerido', message: 'Por favor selecciona un cliente.' });
       return;
     }
     if (productosAgregados.length === 0) {
-      showAlert('Por favor agrega al menos un producto al préstamo.', 'Productos requeridos', 'warning');
+      showToast({ type: 'warning', title: 'Productos requeridos', message: 'Por favor agrega al menos un producto al préstamo.' });
       return;
     }
 
@@ -370,7 +371,7 @@ function AppContent() {
       setCustomPrice('');
       setOpenNewPrestamo(false);
     } catch (err) {
-      showAlert('Error al registrar préstamo: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al registrar préstamo: ' + err.message });
     } finally {
       setSubmitting(false);
     }
@@ -381,7 +382,7 @@ function AppContent() {
     e.preventDefault();
     const prestamoId = selectedPrestamoForAbono?.id || newAbonoData.prestamo_id;
     if (!prestamoId || !newAbonoData.monto) {
-      showAlert('Por favor completa los campos obligatorios.', 'Campos incompletos', 'warning');
+      showToast({ type: 'warning', title: 'Campos incompletos', message: 'Por favor completa los campos obligatorios.' });
       return;
     }
 
@@ -412,7 +413,7 @@ function AppContent() {
       setSelectedPrestamoForAbono(null);
       setOpenNewAbono(false);
     } catch (err) {
-      showAlert('Error al registrar abono: ' + err.message, 'Error', 'error');
+      showToast({ type: 'error', title: 'Error', message: 'Error al registrar abono: ' + err.message });
     } finally {
       setSubmitting(false);
     }

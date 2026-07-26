@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSupabaseClient, isSupabaseConfigured, updateSupabaseCredentials } from '../supabaseClient';
+import { useToast } from '../hooks/useToast';
 
 const AppContext = createContext();
 
@@ -60,6 +61,8 @@ export const AppProvider = ({ children }) => {
     }
     return 'demo';
   });
+
+  const { showToast } = useToast();
 
   const [clientes, setClientes] = useState([]);
   const [prestamos, setPrestamos] = useState([]);
@@ -317,7 +320,7 @@ export const AppProvider = ({ children }) => {
         setMode('supabase');
         localStorage.setItem('app_mode', 'supabase');
       } else {
-        showAlert('Supabase no está configurado. Por favor, configúralo primero.', 'Configuración requerida', 'warning');
+        showToast({ type: 'warning', title: 'Configuración requerida', message: 'Supabase no está configurado. Por favor, configúralo primero.' });
       }
     } else {
       setMode('demo');

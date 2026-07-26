@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../hooks/useToast';
 import {
   Search,
   UserPlus,
@@ -25,7 +26,8 @@ export default function ClientesList({
   onEditCliente, 
   onRequestDeleteCliente 
 }) {
-  const { clientes, prestamos, abonos, user, loading, showAlert } = useApp();
+  const { clientes, prestamos, abonos, user, loading } = useApp();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -104,13 +106,15 @@ export default function ClientesList({
       await exportarCuentaCobroPDF(snapshot);
     } catch (err) {
       console.error('Error exportando PDF:', err);
-      if (typeof showAlert === 'function') {
-        showAlert('No se pudo generar el PDF: ' + (err.message || err), 'Error al exportar', 'error');
-      }
+      showToast({
+        type: 'error',
+        title: 'Error al exportar',
+        message: 'No se pudo generar el PDF: ' + (err.message || err),
+      });
     } finally {
       setExportingPdf(false);
     }
-  }, [clientes, prestamos, abonos, user, showAlert]);
+  }, [clientes, prestamos, abonos, user, showToast]);
 
   // Handlers que invocan el modal siguiente (R-hist-2, R-hist-11):
   // cierran el HistorialClienteModal ANTES de abrir el nuevo modal para evitar
