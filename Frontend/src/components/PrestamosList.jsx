@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { 
-  Search, 
-  PlusCircle, 
-  Trash2, 
+import {
+  Search,
+  PlusCircle,
+  Trash2,
   Edit3,
-  DollarSign, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
+  DollarSign,
+  Calendar,
+  CheckCircle2,
+  Clock,
   Info,
   ChevronDown,
   ChevronUp,
   RotateCcw
 } from 'lucide-react';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '../constants/ui';
 
 export default function PrestamosList({ 
   setOpenNewPrestamo, 
@@ -26,7 +28,14 @@ export default function PrestamosList({
   const { clientes, prestamos, abonos, devolverPrestamo, showConfirm, loading } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('pendientes'); // 'todos', 'pendientes', 'pagados'
+  const [currentPage, setCurrentPage] = useState(1);
   const [expandedPrestamoId, setExpandedPrestamoId] = useState(null);
+
+  // Reset a página 1 cuando cambia la búsqueda o el filtro de estado (R-page-State).
+  // Functional update previene stale closure en race conditions (R-page-SearchComposition).
+  useEffect(() => {
+    setCurrentPage((prev) => 1);
+  }, [searchQuery, activeFilter]);
 
   // Formateador de moneda
   const formatCurrency = (value) => {
@@ -82,6 +91,16 @@ export default function PrestamosList({
     }
     return matchesSearch; // 'todos'
   });
+
+  // Paginación client-side (R-page-Slice). safePage es defensivo contra
+  // currentPage stale (p.ej. tras un filtro que dejó 0 items en la página actual).
+  const totalItems = filteredPrestamos.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedPrestamos = filteredPrestamos.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -169,8 +188,9 @@ export default function PrestamosList({
             : `No se encontraron préstamos ${activeFilter !== 'todos' ? activeFilter : ''} que coincidan.`}
         </div>
       ) : (
+        <>
         <div className="space-y-4">
-          {filteredPrestamos.map((prestamo) => {
+          {paginatedPrestamos.map((prestamo) => {
             const cliente = clientes.find(c => c.id === prestamo.cliente_id);
             const { totalAbonado, saldoRestante } = getSaldoPrestamo(prestamo);
             const abonosP = getAbonosDePrestamo(prestamo.id);
@@ -381,6 +401,14 @@ export default function PrestamosList({
             );
           })}
         </div>
+        <Pagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+        </>
       )}
     </div>
   );
