@@ -64,3 +64,62 @@ export const formatGramosInput = (val, maxDecimals = 3) => {
   // strip trailing zeros & dangling dot: "10.000" -> "10", "3.500" -> "3.5" (comma as decimal collapses the same way)
   return fixed.replace(/\.?0+$/, '') || '0';
 };
+
+/**
+ * Formatea un número como monto en es-CO con separador de miles.
+ * Sin símbolo de moneda (la UI concatena "$" en el template).
+ * - null/undefined/NaN -> "0"
+ * - Negativos se formatean con signo
+ * - Decimales se redondean al entero más cercano (es-CO no usa centavos en esta app)
+ *
+ * Ejemplos:
+ *   formatMonto(0)            -> "0"
+ *   formatMonto(1000)         -> "1.000"
+ *   formatMonto(100000)       -> "100.000"
+ *   formatMonto(1000000)      -> "1.000.000"
+ *   formatMonto(-50000)       -> "-50.000"
+ *   formatMonto(null)         -> "0"
+ *   formatMonto(undefined)    -> "0"
+ */
+export const formatMonto = (value) => {
+  const num = Math.round(Number(value) || 0);
+  return new Intl.NumberFormat('es-CO').format(num);
+};
+
+/**
+ * Genera un link wa.me listo para <a href>, con mensaje pre-llenado
+ * personalizado según si el cliente tiene deuda pendiente.
+ *
+ * Comportamiento:
+ * - Si `telefono` es falsy (null/undefined/""), retorna null (la UI debe
+ *   condicionar el render del link).
+ * - Acepta teléfonos de 10 dígitos (Colombia) y les antepone el prefijo
+ *   país 57. Si ya tiene prefijo o más dígitos, lo deja como está.
+ * - Mensaje con deuda: "Hola {nombre}, te saludo de la tienda. Te escribo
+ *   para recordarte que tienes un saldo pendiente de ${monto}..."
+ * - Mensaje sin deuda: "Hola {nombre}, te saludo de la tienda. ¡Gracias
+ *   por tu compra y estar al día!..."
+ *
+ * Ejemplos:
+ *   getWhatsAppLink("3124567890", "María", 50000)
+ *     -> "https://wa.me/573124567890?text=Hola%20Mar%C3%ADa%20..."
+ *   getWhatsAppLink("+573124567890", "Carlos", 0)
+ *     -> "https://wa.me/573124567890?text=...al%20d%C3%ADa..."
+ *   getWhatsAppLink(null, "X", 100)   -> null
+ *   getWhatsAppLink("",   "X", 100)   -> null
+ */
+export const getWhatsAppLink = (telefono, nombre, deuda = 0) => {
+  if (!telefono) return null;
+  const cleanPhone = String(telefono).replace(/\D/g, '');
+  if (cleanPhone === '') return null;
+  const phoneWithCountry = cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone;
+
+  let text = `Hola ${nombre || ''}, te saludo de la tienda. `;
+  if (deuda > 0) {
+    text += `Te escribo para recordarte que tienes un saldo pendiente de $${formatMonto(deuda)} en tu cuenta. ¡Que tengas un feliz día!`;
+  } else {
+    text += `¡Gracias por tu compra y estar al día! Que tengas un excelente día.`;
+  }
+
+  return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
+};

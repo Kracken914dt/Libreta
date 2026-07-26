@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
-import { X, FileDown, MessageSquare, Plus, Minus } from 'lucide-react';
+import { X, FileDown, MessageSquare, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { formatMonto, getWhatsAppLink } from '../utils/validation';
 
 /**
  * HistorialClienteModal — Modal centrado con el historial completo de un cliente.
@@ -58,10 +59,7 @@ export function HistorialClienteModal({
     .join('')
     .toUpperCase() || '?';
 
-  // Formateador de monto (Intl es-CO con separador de miles, sin símbolo de moneda;
-  // el "$" se concatena en el template). Mismo patrón que ClientesList.formatCurrency,
-  // sin la envoltura COP porque acá el prefijo se incluye explícito en el JSX.
-  const formatMonto = (value) => new Intl.NumberFormat('es-CO').format(value || 0);
+  // getWhatsAppLink + formatMonto vienen de utils/validation (testeados, ver __tests__/validation.test.js)
 
   function handleBackdropClick(e) {
     if (e.target === e.currentTarget) onClose();
@@ -160,7 +158,7 @@ export function HistorialClienteModal({
               )}
               {cliente.telefono && (
                 <a
-                  href={`https://wa.me/${cliente.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${cliente.nombre}, te recuerdo tu saldo pendiente en La Libreta Digital.`)}`}
+                  href={getWhatsAppLink(cliente.telefono, cliente.nombre, saldoPendiente) || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
@@ -174,10 +172,16 @@ export function HistorialClienteModal({
           {/* RIGHT column — lista de préstamos con abonos anidados (R-hist-2) */}
           <div className="lg:col-span-2 space-y-4">
             {prestamosCliente.length === 0 ? (
-              <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center">
+              <div className="bg-slate-50 dark:bg-slate-800/30 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center space-y-3">
                 <p className="text-slate-500 dark:text-slate-400 font-medium">
                   Este cliente no tiene préstamos registrados
                 </p>
+                <button
+                  onClick={() => onCrearPrestamo(cliente)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                >
+                  <ShoppingBag size={14} /> Fiar Primer Producto
+                </button>
               </div>
             ) : (
               prestamosCliente.map(prestamo => {
@@ -233,8 +237,8 @@ export function HistorialClienteModal({
                           esDevuelto
                             ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                             : esPagado
-                            ? 'bg-emerald-200 dark:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200'
-                            : 'bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200'
+                            ? 'bg-teal-200 dark:bg-teal-800/50 text-teal-800 dark:text-teal-200'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
                         }`}>
                           {esDevuelto ? 'Devuelto' : esPagado ? '✓ Pagado' : 'Pendiente'}
                         </span>
@@ -294,15 +298,15 @@ export function HistorialClienteModal({
           Todos los Abonos ({abonosCliente.length})
         </h3>
         {abonosCliente.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">No hay abonos registrados</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4 italic">No hay abonos registrados</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800/50">
                 <tr>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Fecha</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Monto</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Préstamo</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Monto</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Notas</th>
                 </tr>
               </thead>
@@ -316,18 +320,33 @@ export function HistorialClienteModal({
                   .map(abono => {
                     const prestamo = prestamosCliente.find(p => p.id === abono.prestamo_id);
                     const fechaAbono = abono.fecha_abono || abono.fecha;
+                    // Resolver el nombre del producto del préstamo (mismo patrón
+                    // defensivo que el card del préstamo: array | JSON-string | fallback)
+                    let prestamoLabel = null;
+                    if (prestamo) {
+                      const pf = prestamo.productos_fiados;
+                      if (Array.isArray(pf) && pf.length > 0) {
+                        prestamoLabel = pf.map(p => p.nombre).join(', ');
+                      } else if (typeof pf === 'string' && pf.trim()) {
+                        try {
+                          const parsed = JSON.parse(pf);
+                          if (Array.isArray(parsed) && parsed[0]?.nombre) {
+                            prestamoLabel = parsed.map(p => p.nombre).join(', ');
+                          }
+                        } catch { /* keep null */ }
+                      }
+                      if (!prestamoLabel) prestamoLabel = prestamo.producto || null;
+                    }
                     return (
                       <tr key={abono.id} className="border-t border-slate-100 dark:border-slate-800">
                         <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
                           {fechaAbono ? new Date(fechaAbono).toLocaleDateString('es-CO') : '—'}
                         </td>
+                        <td className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs">
+                          {prestamoLabel || '—'}
+                        </td>
                         <td className="px-3 py-2 text-right font-semibold text-teal-600 dark:text-teal-400">
                           $ {formatMonto(abono.monto || 0)}
-                        </td>
-                        <td className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs">
-                          {prestamo
-                            ? new Date(prestamo.fecha_prestamo || prestamo.created_at).toLocaleDateString('es-CO')
-                            : '—'}
                         </td>
                         <td className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs">
                           {abono.notas || '—'}

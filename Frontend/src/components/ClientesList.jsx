@@ -1,22 +1,19 @@
 import React, { useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { 
-  Search, 
-  UserPlus, 
-  Trash2, 
+import {
+  Search,
+  UserPlus,
+  Trash2,
   Edit3,
-  Phone, 
-  MessageSquare, 
-  CreditCard, 
-  PlusCircle, 
-  ArrowRight, 
-  ChevronRight, 
-  X,
+  Phone,
+  MessageSquare,
+  CreditCard,
+  ChevronRight,
   History,
-  DollarSign,
   FileDown
 } from 'lucide-react';
 import { exportarCuentaCobroPDF } from '../utils/pdfCliente';
+import { getWhatsAppLink } from '../utils/validation';
 import HistorialClienteModal from './HistorialClienteModal';
 
 export default function ClientesList({ 
@@ -83,21 +80,7 @@ export default function ClientesList({
     };
   };
 
-  // Limpiar y formatear número para WhatsApp
-  const getWhatsAppLink = (telefono, nombre, deuda) => {
-    if (!telefono) return null;
-    const cleanPhone = telefono.replace(/\D/g, '');
-    const phoneWithCountry = cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone;
-    
-    let text = `Hola ${nombre}, te saludo de la tienda. `;
-    if (deuda > 0) {
-      text += `Te escribo para recordarte que tienes un saldo pendiente de ${formatCurrency(deuda)} en tu cuenta. ¡Que tengas un feliz día!`;
-    } else {
-      text += `¡Gracias por tu compra y estar al día! Que tengas un excelente día.`;
-    }
-    
-    return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
-  };
+  // getWhatsAppLink viene de utils/validation (testeado, ver __tests__/validation.test.js)
 
   // Handler unificado de export PDF (T7): dispara desde card y desde drawer.
   // Snapshot deep-clone en el momento del click (Gap #4) — useCallback memoiza

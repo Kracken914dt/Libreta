@@ -60,7 +60,7 @@ export default function LoginScreen({ onSkip }) {
               </div>
             </>
           ) : (
-            <div className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-2xl text-left space-y-2">
+            <div className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-2xl text-left space-y-2">
               <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold text-xs">
                 <Database size={14} />
                 <span>Base de Datos no Configurada</span>
