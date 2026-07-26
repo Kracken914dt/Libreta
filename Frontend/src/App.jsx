@@ -13,6 +13,7 @@ import ProductosList from './components/ProductosList';
 import EditProductoModal from './components/EditProductoModal';
 import EditCategoriaModal from './components/EditCategoriaModal';
 import AlertModal from './components/AlertModal';
+import { ToastContainer } from './components/ToastContainer';
 import { 
   handleNumberKeyDown, 
   formatNameInput, 
@@ -1185,6 +1186,9 @@ function AppContent() {
 
       {/* AlertModal Global */}
       <AlertModal isOpen={!!alertConfig} alertConfig={alertConfig} onClose={closeAlert} />
+
+      {/* ToastContainer: non-modal notifications (z-100, top-right) */}
+      <ToastContainer />
 
     </div>
   );

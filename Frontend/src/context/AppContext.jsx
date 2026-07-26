@@ -896,6 +896,75 @@ export const AppProvider = ({ children }) => {
     setProductos(prev => prev.map(p => p.id === productoId ? { ...p, stock: newStock } : p));
   };
 
+  // Dev seam (spec R-page-DevSeed): inflate MOCK data to exercise pagination
+  // without a real Supabase backend. Gated by import.meta.env.DEV so the prod
+  // build is tree-shaken. Same pattern as useModalA11y L118-123.
+  //
+  // Usage in dev console: __seed_test_data(50)   // 50 clientes + 100 prestamos + 250 abonos
+  useEffect(() => {
+    if (typeof window === 'undefined' || !import.meta.env?.DEV) return;
+
+    const firstNames = ['Carlos', 'María', 'Roberto', 'Diana', 'Pedro', 'Ana', 'Luis', 'Sofía', 'Miguel', 'Laura', 'Andrés', 'Camila', 'Felipe', 'Valentina', 'Jorge', 'Daniela', 'Ricardo', 'Paula', 'Tomás', 'Juliana'];
+    const lastNames = ['Pérez', 'Gómez', 'Ruiz', 'Restrepo', 'García', 'López', 'Martínez', 'Rodríguez', 'Hernández', 'Torres', 'Ramírez', 'Castro', 'Vargas', 'Morales', 'Romero', 'Suárez', 'Mendoza', 'Ortega', 'Córdoba', 'Reyes'];
+    const estados = ['pendiente', 'pagado', 'devuelto'];
+    const notas = ['Cliente cumplido', 'Pago parcial', 'Promesa próxima semana', 'Sin contacto', 'Prefiere efectivo', null];
+
+    window.__seed_test_data = (count = 50) => {
+      const now = Date.now();
+
+      // Clientes: nombres con índice estable
+      const generatedClientes = Array.from({ length: count }, (_, i) => ({
+        id: `c_seed_${i}`,
+        nombre: `${firstNames[i % firstNames.length]} ${lastNames[(i * 3) % lastNames.length]}`,
+        cedula: String(10000000 + i).padStart(8, '0'),
+        telefono: `300${String(1000000 + i).padStart(7, '0')}`,
+        created_at: new Date(now - i * 86400000).toISOString(),
+      }));
+      // REPLACE no append — repeatable para iterar tests
+      setClientes(generatedClientes);
+
+      // Prestamos: 2x count, distribuidos entre los clientes generados
+      const generatedPrestamos = Array.from({ length: count * 2 }, (_, i) => {
+        const cliente = generatedClientes[i % generatedClientes.length];
+        const total = 50000 + (i * 17321) % 950000;
+        return {
+          id: `p_seed_${i}`,
+          cliente_id: cliente.id,
+          producto: i % 2 === 0 ? 'Artículo fiado' : 'Servicio prestado',
+          precio_total: total,
+          fecha_prestamo: new Date(now - i * 43200000).toISOString(),
+          estado: estados[i % estados.length],
+          dias_pago_sugeridos: 'Quincenal (15 y 30)',
+          notas: notas[i % notas.length],
+          productos_fiados: [],
+          created_at: new Date(now - i * 43200000).toISOString(),
+        };
+      });
+      setPrestamos(generatedPrestamos);
+
+      // Abonos: 2.5x count, distribuidos entre los prestamos
+      const generatedAbonos = Array.from({ length: count * 2.5 | 0 }, (_, i) => {
+        const prestamo = generatedPrestamos[i % generatedPrestamos.length];
+        const monto = Math.min(prestamo.precio_total, 10000 + (i * 7919) % 200000);
+        return {
+          id: `a_seed_${i}`,
+          prestamo_id: prestamo.id,
+          monto,
+          fecha_abono: new Date(now - i * 21600000).toISOString(),
+          notas: '',
+          created_at: new Date(now - i * 21600000).toISOString(),
+        };
+      });
+      setAbonos(generatedAbonos);
+
+      const msg = `Seeded ${count} clientes, ${count * 2} prestamos, ${generatedAbonos.length} abonos (modo demo, REEMPLAZA los actuales)`;
+      console.log('[__seed_test_data]', msg);
+      return msg;
+    };
+    // eslint-disable-next-line no-console
+    console.info('[dev] __seed_test_data(count) disponible en window. Ej: __seed_test_data(50)');
+  }, []);
+
   return (
     <AppContext.Provider value={{
       mode,
