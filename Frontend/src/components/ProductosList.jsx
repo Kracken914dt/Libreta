@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Package,
@@ -14,6 +14,8 @@ import {
   Coins
 } from 'lucide-react';
 import { isJewelryCategory } from '../utils/validation';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '../constants/ui';
 
 export default function ProductosList({ 
   setOpenNewProducto, 
@@ -26,7 +28,14 @@ export default function ProductosList({
   const { productos, categorias } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCatId, setSelectedCatId] = useState('todos');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showManageCats, setShowManageCats] = useState(false);
+
+  // Reset a página 1 cuando cambia la búsqueda o la categoría (R-page-State).
+  // Functional update previene stale closure en race conditions (R-page-SearchComposition).
+  useEffect(() => {
+    setCurrentPage((prev) => 1);
+  }, [searchQuery, selectedCatId]);
 
   // Formatear Moneda Colombiana
   const formatCurrency = (val) => {
@@ -47,13 +56,23 @@ export default function ProductosList({
 
   // Filtrado de productos
   const filteredProductos = productos.filter(p => {
-    const matchesSearch = p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (p.descripcion && p.descripcion.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesCat = selectedCatId === 'todos' || p.categoria_id === selectedCatId;
-    
+
     return matchesSearch && matchesCat;
   });
+
+  // Paginación client-side (R-page-Slice). safePage es defensivo contra
+  // currentPage stale (p.ej. tras un filtro que dejó 0 items en la página actual).
+  const totalItems = filteredProductos.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedProductos = filteredProductos.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   // Conteo de bajo stock
   const getLowStockCount = () => {
@@ -223,13 +242,14 @@ export default function ProductosList({
       {/* Grid de Productos */}
       {filteredProductos.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-12 rounded-2xl text-center text-slate-400 dark:text-slate-500 shadow-sm">
-          {productos.length === 0 
+          {productos.length === 0
             ? "No tienes productos en el inventario. Agrega uno con el botón 'Nuevo Producto'."
             : "No se encontraron productos con los filtros aplicados."}
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredProductos.map(p => {
+          {paginatedProductos.map(p => {
             const cat = categorias.find(c => c.id === p.categoria_id);
             const isOutOfStock = p.stock === 0;
             const isLowStock = p.stock > 0 && p.stock <= 5;
@@ -359,6 +379,14 @@ export default function ProductosList({
             );
           })}
         </div>
+        <Pagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+        </>
       )}
     </div>
   );
