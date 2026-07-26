@@ -539,11 +539,15 @@ function AppContent() {
             {/* Toggle de Modo Claro / Oscuro */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm dark:shadow-none"
+              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm dark:shadow-none group"
               aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
               title={theme === 'dark' ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
             >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === 'dark' ? (
+                <Sun size={16} className="transition-transform duration-300 group-hover:rotate-45" />
+              ) : (
+                <Moon size={16} className="transition-transform duration-300 group-hover:-rotate-45" />
+              )}
             </button>
 
             {/* Indicador e Interruptor de Base de Datos */}
