@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased selection:bg-teal-500/30 selection:text-teal-200 min-h-screen overflow-x-hidden;
+    @apply bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased selection:bg-teal-300 selection:text-slate-900 dark:selection:bg-teal-600/50 dark:selection:text-teal-50 min-h-screen overflow-x-hidden;
     font-family: 'Outfit', sans-serif;
   }
 

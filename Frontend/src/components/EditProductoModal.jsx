@@ -5,7 +5,8 @@ import {
   handleNumberKeyDown,
   formatNameInput,
   formatMontoInput,
-  formatGramosInput
+  formatGramosInput,
+  isJewelryCategory
 } from '../utils/validation';
 import { useModalA11y } from '../hooks/useModalA11y';
 
@@ -54,7 +55,13 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
 
   if (!isOpen) return null;
 
-  // Live ganancia: derivada (R-joy-3), nunca persistida
+  // Detectar joyería: los campos de peso/largo/costo-g/precio-g sólo aplican
+  // cuando la categoría seleccionada es Oro/Plata/Bronce. Para ropa, zapatos,
+  // etc., no se muestran (preguntan "peso en gramos?" a una camisa es raro).
+  const selectedCategory = categorias.find(c => c.id === categoriaId);
+  const isJewelry = isJewelryCategory(selectedCategory);
+
+  // Live ganancia: derivada (R-joy-3), nunca persistida. Sólo computable para joyería.
   const parseNum = (v) => {
     if (v === '' || v == null) return null;
     const n = parseFloat(String(v).replace(',', '.'));
@@ -63,7 +70,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
   const p = parseNum(pesoGramos);
   const c = parseNum(costoPorGramo);
   const v = parseNum(precioPorGramo);
-  const ganancia = (p != null && c != null && v != null) ? (v - c) * p : null;
+  const ganancia = isJewelry && (p != null && c != null && v != null) ? (v - c) * p : null;
 
   const formatCurrency = (n) => {
     return new Intl.NumberFormat('es-CO', {
@@ -198,69 +205,78 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             </div>
           </div>
 
-          {/* Joyería: peso + largo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Peso (gramos)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="Ej. 5.2"
-                value={pesoGramos}
-                onChange={(e) => setPesoGramos(formatGramosInput(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Largo (cm)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder="Ej. 18"
-                value={largo}
-                onChange={(e) => setLargo(formatGramosInput(e.target.value, 2))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
-          </div>
+          {/* Joyería: peso + largo + costo/g + precio/g — sólo se muestra si la categoría es joyería */}
+          {isJewelry && (
+            <>
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Coins size={11} /> Datos de Joyería
+                </p>
+              </div>
 
-          {/* Joyería: costo por gramo + precio por gramo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Costo / gramo ($)</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="Ej. 80000"
-                value={costoPorGramo}
-                onChange={(e) => setCostoPorGramo(formatMontoInput(e.target.value))}
-                onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio / gramo ($)</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="Ej. 120000"
-                value={precioPorGramo}
-                onChange={(e) => setPrecioPorGramo(formatMontoInput(e.target.value))}
-                onKeyDown={handleNumberKeyDown}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Peso (gramos)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ej. 5.2"
+                    value={pesoGramos}
+                    onChange={(e) => setPesoGramos(formatGramosInput(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Largo (cm)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ej. 18"
+                    value={largo}
+                    onChange={(e) => setLargo(formatGramosInput(e.target.value, 2))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+              </div>
 
-          {/* Ganancia estimada: derivada live, nunca persistida */}
-          {ganancia != null && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-              <Coins size={14} className="text-amber-500 shrink-0" />
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Ganancia estimada:</span>
-              <span className={`text-xs font-bold ml-auto ${ganancia >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {formatCurrency(ganancia)}
-              </span>
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Costo / gramo ($)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Ej. 80000"
+                    value={costoPorGramo}
+                    onChange={(e) => setCostoPorGramo(formatMontoInput(e.target.value))}
+                    onKeyDown={handleNumberKeyDown}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio / gramo ($)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Ej. 120000"
+                    value={precioPorGramo}
+                    onChange={(e) => setPrecioPorGramo(formatMontoInput(e.target.value))}
+                    onKeyDown={handleNumberKeyDown}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Ganancia estimada: derivada live, nunca persistida */}
+              {ganancia != null && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <Coins size={14} className="text-amber-500 shrink-0" />
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Ganancia estimada:</span>
+                  <span className={`text-xs font-bold ml-auto ${ganancia >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {formatCurrency(ganancia)}
+                  </span>
+                </div>
+              )}
+            </>
           )}
 
           {/* Imagen URL */}

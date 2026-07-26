@@ -123,3 +123,26 @@ export const getWhatsAppLink = (telefono, nombre, deuda = 0) => {
 
   return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
 };
+
+/**
+ * Categorías que disparan los campos de joyería (peso, largo, costo/g, precio/g).
+ * Comparación case-insensitive contra el nombre. Si el usuario renombra la
+ * categoría, debe mantener "Oro", "Plata" o "Bronce" para que la detección siga
+ * funcionando — alternativa futura: agregar flag `es_joyeria` a la categoría.
+ */
+export const JEWELRY_CATEGORY_NAMES = ['oro', 'plata', 'bronce'];
+
+/**
+ * Detecta si una categoría es de joyería (peso por gramo aplica).
+ * - Acepta `null`/`undefined` (retorna false)
+ * - Match case-insensitive contra JEWELRY_CATEGORY_NAMES
+ * - Match contra `nombre` (con o sin acentos)
+ *
+ * @param {{ nombre?: string } | null | undefined} categoria
+ * @returns {boolean}
+ */
+export const isJewelryCategory = (categoria) => {
+  if (!categoria || !categoria.nombre) return false;
+  const nombre = String(categoria.nombre).toLowerCase().trim();
+  return JEWELRY_CATEGORY_NAMES.includes(nombre);
+};

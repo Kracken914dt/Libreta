@@ -3,6 +3,8 @@ import {
   formatGramosInput,
   formatMonto,
   getWhatsAppLink,
+  isJewelryCategory,
+  JEWELRY_CATEGORY_NAMES,
   formatMontoInput,
   formatDigitsInput,
   formatNameInput,
@@ -194,5 +196,34 @@ describe('handleNumberKeyDown (existente, regression)', () => {
       handleNumberKeyDown({ key, preventDefault });
     });
     expect(preventDefault).not.toHaveBeenCalled();
+  });
+});
+
+describe('isJewelryCategory', () => {
+  it('detecta Oro, Plata, Bronce case-insensitive', () => {
+    expect(isJewelryCategory({ nombre: 'Oro' })).toBe(true);
+    expect(isJewelryCategory({ nombre: 'Plata' })).toBe(true);
+    expect(isJewelryCategory({ nombre: 'Bronce' })).toBe(true);
+    expect(isJewelryCategory({ nombre: 'oro' })).toBe(true);
+    expect(isJewelryCategory({ nombre: 'ORO' })).toBe(true);
+    expect(isJewelryCategory({ nombre: '  Plata  ' })).toBe(true); // trim
+  });
+
+  it('rechaza categorías no-joyería', () => {
+    expect(isJewelryCategory({ nombre: 'Ropa' })).toBe(false);
+    expect(isJewelryCategory({ nombre: 'Calzado' })).toBe(false);
+    expect(isJewelryCategory({ nombre: 'Anillos' })).toBe(false); // similar pero no exacto
+    expect(isJewelryCategory({ nombre: '' })).toBe(false);
+  });
+
+  it('maneja null/undefined/object sin nombre', () => {
+    expect(isJewelryCategory(null)).toBe(false);
+    expect(isJewelryCategory(undefined)).toBe(false);
+    expect(isJewelryCategory({})).toBe(false);
+    expect(isJewelryCategory({ id: 'cat1' })).toBe(false);
+  });
+
+  it('la constante JEWELRY_CATEGORY_NAMES está exportada y tiene los 3 valores esperados', () => {
+    expect(JEWELRY_CATEGORY_NAMES).toEqual(['oro', 'plata', 'bronce']);
   });
 });

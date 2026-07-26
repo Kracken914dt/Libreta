@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  Tag, 
-  Edit, 
-  Trash2, 
+import {
+  Package,
+  Plus,
+  Search,
+  Tag,
+  Edit,
+  Trash2,
   AlertTriangle,
   FolderPlus,
   Eye,
   X,
   Coins
 } from 'lucide-react';
+import { isJewelryCategory } from '../utils/validation';
 
 export default function ProductosList({ 
   setOpenNewProducto, 
@@ -232,12 +233,14 @@ export default function ProductosList({
             const cat = categorias.find(c => c.id === p.categoria_id);
             const isOutOfStock = p.stock === 0;
             const isLowStock = p.stock > 0 && p.stock <= 5;
-            // Joyería: ganancia derivada, never persisted
-            const pg = p.peso_gramos != null ? parseFloat(p.peso_gramos) : null;
-            const cg = p.costo_por_gramo != null ? parseFloat(p.costo_por_gramo) : null;
-            const vg = p.precio_por_gramo != null ? parseFloat(p.precio_por_gramo) : null;
-            const ganancia = (pg != null && cg != null && vg != null) ? (vg - cg) * pg : null;
-            const showJewelryLine = pg != null || p.largo != null;
+            // Joyería: peso/largo/ganancia sólo aplican si la categoría es joyería.
+            // Para ropa/zapatos/etc. ni siquiera calculamos (es 0 en sus datos).
+            const isJewelry = isJewelryCategory(cat);
+            const pg = isJewelry && p.peso_gramos != null ? parseFloat(p.peso_gramos) : null;
+            const cg = isJewelry && p.costo_por_gramo != null ? parseFloat(p.costo_por_gramo) : null;
+            const vg = isJewelry && p.precio_por_gramo != null ? parseFloat(p.precio_por_gramo) : null;
+            const ganancia = isJewelry && (pg != null && cg != null && vg != null) ? (vg - cg) * pg : null;
+            const showJewelryLine = isJewelry && (pg != null || p.largo != null);
             
             return (
               <div 
