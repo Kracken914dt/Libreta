@@ -42,7 +42,7 @@ describe('useToast', () => {
     expect(id1).not.toBe(id2);
   });
 
-  it('auto-dismisses a success toast after 4s', () => {
+  it('auto-dismisses a success toast after 4s', async () => {
     const { result } = renderHook(() => useToast());
 
     act(() => {
@@ -50,13 +50,13 @@ describe('useToast', () => {
     });
     expect(result.current.toasts).toHaveLength(1);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(4001);
     });
     expect(result.current.toasts).toHaveLength(0);
   });
 
-  it('auto-dismisses a warning toast after 6s', () => {
+  it('auto-dismisses a warning toast after 6s', async () => {
     const { result } = renderHook(() => useToast());
 
     act(() => {
@@ -64,19 +64,19 @@ describe('useToast', () => {
     });
     expect(result.current.toasts).toHaveLength(1);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(4001);
     });
     // 4s is the success/info default — warning should still be visible.
     expect(result.current.toasts).toHaveLength(1);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(2000);
     });
     expect(result.current.toasts).toHaveLength(0);
   });
 
-  it('custom duration overrides the per-type default', () => {
+  it('custom duration overrides the per-type default', async () => {
     const { result } = renderHook(() => useToast());
 
     act(() => {
@@ -85,18 +85,18 @@ describe('useToast', () => {
     expect(result.current.toasts).toHaveLength(1);
 
     // At 6s the default error would have fired; custom 8s keeps it alive.
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(6001);
     });
     expect(result.current.toasts).toHaveLength(1);
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(2000);
     });
     expect(result.current.toasts).toHaveLength(0);
   });
 
-  it('dismissToast removes the toast and clears its timer', () => {
+  it('dismissToast removes the toast and clears its timer', async () => {
     const { result } = renderHook(() => useToast());
 
     let id;
@@ -111,7 +111,7 @@ describe('useToast', () => {
     expect(result.current.toasts).toHaveLength(0);
 
     // Advancing past the original 4s must NOT re-fire anything.
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(5000);
     });
     expect(result.current.toasts).toHaveLength(0);

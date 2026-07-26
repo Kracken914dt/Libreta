@@ -34,7 +34,7 @@ export default function PrestamosList({
   // Reset a página 1 cuando cambia la búsqueda o el filtro de estado (R-page-State).
   // Functional update previene stale closure en race conditions (R-page-SearchComposition).
   useEffect(() => {
-    setCurrentPage((prev) => 1);
+    setCurrentPage(1);
   }, [searchQuery, activeFilter]);
 
   // Formateador de moneda

@@ -34,7 +34,7 @@ export default function ProductosList({
   // Reset a página 1 cuando cambia la búsqueda o la categoría (R-page-State).
   // Functional update previene stale closure en race conditions (R-page-SearchComposition).
   useEffect(() => {
-    setCurrentPage((prev) => 1);
+    setCurrentPage(1);
   }, [searchQuery, selectedCatId]);
 
   // Formatear Moneda Colombiana

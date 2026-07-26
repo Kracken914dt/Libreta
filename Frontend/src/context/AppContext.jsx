@@ -76,6 +76,9 @@ export const AppProvider = ({ children }) => {
   const [alertConfig, setAlertConfig] = useState(null);
 
   const showAlert = (message, title = 'Alerta', type = 'warning') => {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('[Libreta] showAlert is deprecated. Use useToast().showToast({ type, message, title }) instead.');
+    }
     setAlertConfig({ title, message, type });
   };
 

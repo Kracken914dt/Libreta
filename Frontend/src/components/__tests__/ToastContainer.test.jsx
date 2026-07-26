@@ -27,11 +27,11 @@ describe('ToastContainer', () => {
     cleanup();
   });
 
-  it('renders 4 toasts of different types with the right icons and palettes', () => {
+  it('renders 4 toasts of different types with the right icons and palettes', async () => {
     const apiRef = { current: null };
     render(<Harness apiRef={apiRef} />);
 
-    act(() => {
+    await act(async () => {
       apiRef.current.showToast({ type: 'success', message: 'OK' });
       apiRef.current.showToast({ type: 'info', message: 'Info msg' });
       apiRef.current.showToast({ type: 'warning', message: 'Warn msg' });
@@ -58,28 +58,28 @@ describe('ToastContainer', () => {
     expect(screen.getByText('Err msg')).toBeInTheDocument();
   });
 
-  it('click on X dismisses the corresponding toast', () => {
+  it('click on X dismisses the corresponding toast', async () => {
     const apiRef = { current: null };
     render(<Harness apiRef={apiRef} />);
 
-    act(() => {
+    await act(async () => {
       apiRef.current.showToast({ type: 'info', message: 'closable' });
     });
     expect(screen.getByText('closable')).toBeInTheDocument();
 
     const closeBtn = screen.getByRole('button', { name: /cerrar notificaci/i });
-    act(() => {
+    await act(async () => {
       fireEvent.click(closeBtn);
     });
     expect(screen.queryByText('closable')).not.toBeInTheDocument();
     expect(apiRef.current.toasts).toHaveLength(0);
   });
 
-  it('stack cap: 6th toast force-dismisses the oldest', () => {
+  it('stack cap: 6th toast force-dismisses the oldest', async () => {
     const apiRef = { current: null };
     render(<Harness apiRef={apiRef} />);
 
-    act(() => {
+    await act(async () => {
       for (let i = 1; i <= 6; i += 1) {
         apiRef.current.showToast({ type: 'info', message: `t${i}` });
       }
@@ -93,11 +93,11 @@ describe('ToastContainer', () => {
     expect(screen.getByText('t6')).toBeInTheDocument();
   });
 
-  it('success/info use role=status; warning/error use role=alert with assertive live region', () => {
+  it('success/info use role=status; warning/error use role=alert with assertive live region', async () => {
     const apiRef = { current: null };
     render(<Harness apiRef={apiRef} />);
 
-    act(() => {
+    await act(async () => {
       apiRef.current.showToast({ type: 'success', message: 'polite s' });
       apiRef.current.showToast({ type: 'info', message: 'polite i' });
       apiRef.current.showToast({ type: 'warning', message: 'assertive w' });
@@ -114,7 +114,7 @@ describe('ToastContainer', () => {
     expect(assertive[0].getAttribute('aria-live')).toBe('assertive');
   });
 
-  it('auto-dismisses a success toast after its 4s duration', () => {
+  it('auto-dismisses a success toast after its 4s duration', async () => {
     const apiRef = { current: null };
     render(<Harness apiRef={apiRef} />);
 
@@ -123,17 +123,17 @@ describe('ToastContainer', () => {
     });
     expect(screen.getByText('temporary')).toBeInTheDocument();
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(4001);
     });
     expect(screen.queryByText('temporary')).not.toBeInTheDocument();
   });
 
-  it('aria-label includes the title when provided', () => {
+  it('aria-label includes the title when provided', async () => {
     const apiRef = { current: null };
     render(<Harness apiRef={apiRef} />);
 
-    act(() => {
+    await act(async () => {
       apiRef.current.showToast({
         type: 'success',
         title: 'Éxito',
