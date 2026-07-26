@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useToast } from '../useToast';
+import { useToast, __resetToastsForTest } from '../useToast';
 
 describe('useToast', () => {
   beforeEach(() => {
+    __resetToastsForTest();
     vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    __resetToastsForTest();
   });
 
   it('showToast adds a toast to the array', () => {
@@ -133,18 +135,27 @@ describe('useToast', () => {
     expect(result.current.toasts[result.current.toasts.length - 1].message).toBe('t6');
   });
 
-  it('clears all timers when the hook unmounts', () => {
-    const clearSpy = vi.spyOn(global, 'clearTimeout');
-    const { result, unmount } = renderHook(() => useToast());
+  it('unmounting one consumer does not affect another (singleton state shared)', () => {
+    // Two independent consumers, fired in different parts of the tree.
+    const a = renderHook(() => useToast());
+    const b = renderHook(() => useToast());
 
     act(() => {
-      result.current.showToast({ type: 'success', message: 'a' });
-      result.current.showToast({ type: 'warning', message: 'b' });
+      a.result.current.showToast({ type: 'info', message: 'from-a' });
     });
+    // Both consumers see the toast (singleton broadcast).
+    expect(a.result.current.toasts).toHaveLength(1);
+    expect(b.result.current.toasts).toHaveLength(1);
 
-    clearSpy.mockClear();
-    unmount();
-    expect(clearSpy).toHaveBeenCalled();
-    clearSpy.mockRestore();
+    // Unmount A — B is unaffected and continues to receive updates.
+    a.unmount();
+    act(() => {
+      b.result.current.showToast({ type: 'info', message: 'from-b' });
+    });
+    expect(b.result.current.toasts).toHaveLength(2);
+    expect(b.result.current.toasts.map((t) => t.message)).toEqual([
+      'from-a',
+      'from-b',
+    ]);
   });
 });
