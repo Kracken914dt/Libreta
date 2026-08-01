@@ -194,11 +194,6 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             />
           </div>
 
-          {mode === 'supabase' && (
-            <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-700 dark:text-emerald-300">
-              Modo Supabase: estos campos se guardan en la base de datos y aparecen en recibos/historial.
-            </div>
-          )}
 
           {/* Categoría */}
           <div className="space-y-1.5">
