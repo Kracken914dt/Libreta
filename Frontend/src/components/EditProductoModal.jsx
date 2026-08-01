@@ -228,7 +228,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ganancia estimada ($)</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ganancia ($)</label>
               <input
                 type="text"
                 inputMode="numeric"
