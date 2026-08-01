@@ -16,6 +16,12 @@ export const formatNameInput = (val) => {
   return clean.slice(0, 22);
 };
 
+// Nombre de producto: permite letras, números y espacios (sin símbolos)
+export const formatProductNameInput = (val) => {
+  const clean = val.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '');
+  return clean.slice(0, 40);
+};
+
 // Validar sólo dígitos (para cédula y teléfono)
 export const formatDigitsInput = (val, maxLen) => {
   const clean = val.replace(/\D/g, '');
@@ -24,13 +30,18 @@ export const formatDigitsInput = (val, maxLen) => {
 
 // Validar montos razonables (max 99 millones, sin decimales)
 export const formatMontoInput = (val) => {
-  const clean = val.replace(/\D/g, '');
+  const clean = String(val || '').replace(/\D/g, '');
   if (clean === '') return '';
   const num = parseInt(clean) || 0;
-  if (num > 99999999) {
-    return '99999999';
-  }
-  return clean;
+  const limited = Math.min(num, 99999999);
+  return new Intl.NumberFormat('es-CO').format(limited);
+};
+
+// Convierte montos de inputs ("120.000") a número (120000)
+export const parseMontoInputValue = (val) => {
+  const clean = String(val || '').replace(/\D/g, '');
+  if (clean === '') return 0;
+  return parseInt(clean, 10) || 0;
 };
 
 /**
@@ -145,4 +156,73 @@ export const isJewelryCategory = (categoria) => {
   if (!categoria || !categoria.nombre) return false;
   const nombre = String(categoria.nombre).toLowerCase().trim();
   return JEWELRY_CATEGORY_NAMES.includes(nombre);
+};
+
+const addDays = (baseDate, days) => {
+  const d = new Date(baseDate);
+  d.setDate(d.getDate() + days);
+  return d;
+};
+
+const toLastDayOfMonth = (year, monthIndex) => new Date(year, monthIndex + 1, 0).getDate();
+
+export const getNextPaymentDate = ({ fechaPrestamo, diasPagoSugeridos, abonos = [] }) => {
+  if (!fechaPrestamo || !diasPagoSugeridos) return null;
+  const baseDate = new Date(fechaPrestamo);
+  if (isNaN(baseDate.getTime())) return null;
+
+  const latestAbono = abonos
+    .map(a => new Date(a.fecha_abono || a.fecha))
+    .filter(d => !isNaN(d.getTime()))
+    .sort((a, b) => b.getTime() - a.getTime())[0];
+  const anchor = latestAbono && latestAbono > baseDate ? latestAbono : baseDate;
+  const label = String(diasPagoSugeridos).toLowerCase();
+
+  if (label.includes('15 días')) return addDays(anchor, 15);
+  if (label.includes('30 días') || label.includes('1 mes')) return addDays(anchor, 30);
+
+  if (label.includes('semanal')) {
+    const weekdayMap = {
+      lunes: 1, martes: 2, 'miércoles': 3, miercoles: 3, jueves: 4, viernes: 5, sábado: 6, sabado: 6, domingo: 0
+    };
+    const found = Object.entries(weekdayMap).find(([k]) => label.includes(k));
+    if (!found) return addDays(anchor, 7);
+    const targetDay = found[1];
+    const currentDay = anchor.getDay();
+    let diff = targetDay - currentDay;
+    if (diff <= 0) diff += 7;
+    return addDays(anchor, diff);
+  }
+
+  if (label.includes('quincenal')) {
+    const y = anchor.getFullYear();
+    const m = anchor.getMonth();
+    const d = anchor.getDate();
+    const lastDay = toLastDayOfMonth(y, m);
+    if (d < 15) return new Date(y, m, 15, anchor.getHours(), anchor.getMinutes());
+    if (d < 30) return new Date(y, m, Math.min(30, lastDay), anchor.getHours(), anchor.getMinutes());
+    const nextMonth = m + 1;
+    return new Date(y, nextMonth, 15, anchor.getHours(), anchor.getMinutes());
+  }
+
+  if (label.includes('mensual')) {
+    const y = anchor.getFullYear();
+    const nextM = anchor.getMonth() + 1;
+    const day = Math.min(anchor.getDate(), toLastDayOfMonth(y + Math.floor(nextM / 12), nextM % 12));
+    return new Date(y, nextM, day, anchor.getHours(), anchor.getMinutes());
+  }
+
+  if (label.includes('fin de mes')) {
+    const y = anchor.getFullYear();
+    const m = anchor.getMonth();
+    const lastDay = toLastDayOfMonth(y, m);
+    if (anchor.getDate() < lastDay) {
+      return new Date(y, m, lastDay, anchor.getHours(), anchor.getMinutes());
+    }
+    const nextM = m + 1;
+    const nextLast = toLastDayOfMonth(y + Math.floor(nextM / 12), nextM % 12);
+    return new Date(y, nextM, nextLast, anchor.getHours(), anchor.getMinutes());
+  }
+
+  return null;
 };

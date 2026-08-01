@@ -334,7 +334,8 @@ ALTER TABLE productos
   ADD COLUMN IF NOT EXISTS peso_gramos NUMERIC(10,3) CHECK (peso_gramos IS NULL OR peso_gramos >= 0),
   ADD COLUMN IF NOT EXISTS largo NUMERIC(10,2) CHECK (largo IS NULL OR largo >= 0),
   ADD COLUMN IF NOT EXISTS costo_por_gramo NUMERIC(12,2) CHECK (costo_por_gramo IS NULL OR costo_por_gramo >= 0),
-  ADD COLUMN IF NOT EXISTS precio_por_gramo NUMERIC(12,2) CHECK (precio_por_gramo IS NULL OR precio_por_gramo >= 0);
+  ADD COLUMN IF NOT EXISTS precio_por_gramo NUMERIC(12,2) CHECK (precio_por_gramo IS NULL OR precio_por_gramo >= 0),
+  ADD COLUMN IF NOT EXISTS ganancia_estimada NUMERIC(12,2) CHECK (ganancia_estimada IS NULL OR ganancia_estimada >= 0);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_categorias_productos_usuario_nombre
   ON categorias_productos (usuario_id, lower(nombre));

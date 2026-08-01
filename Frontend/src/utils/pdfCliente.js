@@ -30,6 +30,7 @@
 //   window.__test_pdf_cliente({ cliente, prestamos, abonosPorPrestamo, user })
 //   → dispara la descarga del PDF y retorna { blob, filename, folio }.
 // =============================================================================
+import { getNextPaymentDate } from './validation';
 
 // -----------------------------------------------------------------------------
 // Helpers locales (sin React, sin Intl, sin I/O)
@@ -140,6 +141,9 @@ function calcularTotales(prestamos, abonosPorPrestamo) {
 // -----------------------------------------------------------------------------
 
 function drawHeader(doc, { user, now, folio }) {
+  doc.setFillColor(124, 58, 237);
+  doc.rect(0, 0, 210, 6, 'F');
+
   doc.setFont('Roboto', 'normal');
   doc.setFontSize(18);
   doc.setFont(undefined, 'bold');
@@ -166,6 +170,9 @@ function drawHeader(doc, { user, now, folio }) {
 
 function drawClienteBlock(doc, cliente, totales) {
   let y = 50;
+  doc.setDrawColor(226, 232, 240);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(12, y - 7, 186, 30, 2, 2, 'FD');
   doc.setFont('Roboto', 'normal');
   doc.setFontSize(11);
   doc.setFont(undefined, 'bold');
@@ -204,6 +211,9 @@ function drawResumenGlobal(doc, totales) {
   doc.setFontSize(11);
   doc.setFont(undefined, 'bold');
   doc.text('Resumen Global', 15, y);
+
+  doc.setFillColor(241, 245, 249);
+  doc.roundedRect(12, y + 1, 186, 11, 2, 2, 'F');
 
   doc.setFontSize(9);
   doc.setFont(undefined, 'normal');
@@ -296,11 +306,21 @@ export async function exportarCuentaCobroPDF({ cliente, prestamos, abonosPorPres
     const saldoP = isDevuelto ? 0 : Math.max(0, (Number(p.precio_total) || 0) - totalAbonadoP);
     const estadoLabel = isDevuelto ? 'Devuelto' : isPagado ? 'Pagado' : 'Pendiente';
 
+    const proximoPagoDate = getNextPaymentDate({
+      fechaPrestamo: p.fecha_prestamo,
+      diasPagoSugeridos: p.dias_pago_sugeridos,
+      abonos: abs,
+    });
+    const planPago = [
+      p.dias_pago_sugeridos || '—',
+      proximoPagoDate ? `Próx: ${formatFechaCorta(proximoPagoDate.toISOString())}` : null,
+    ].filter(Boolean).join('\n');
+
     body.push([
       String(idx + 1),
       formatFechaCorta(p.fecha_prestamo),
       productosToString(p.productos_fiados, p.producto),
-      p.dias_pago_sugeridos || '—',
+      planPago,
       formatMonto(p.precio_total),
       formatMonto(totalAbonadoP),
       isPagado ? '$ 0' : formatMonto(saldoP),
@@ -315,16 +335,16 @@ export async function exportarCuentaCobroPDF({ cliente, prestamos, abonosPorPres
     } else {
       const sortedAbs = [...abs].sort((a, b) => new Date(b.fecha_abono || 0) - new Date(a.fecha_abono || 0));
       body.push([
-        { content: 'Abonos:', colSpan: 8, styles: { fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [71, 85, 105], fontSize: 8 } },
+        { content: 'Abonos registrados', colSpan: 8, styles: { fontStyle: 'bold', fillColor: [220, 252, 231], textColor: [6, 95, 70], fontSize: 8 } },
       ]);
       for (const a of sortedAbs) {
         body.push([
           { content: '', styles: { cellPadding: { top: 0.5, bottom: 0.5, left: 0, right: 0 } } },
           formatFechaCorta(a.fecha_abono),
-          { content: a.notas || '—', styles: { fontStyle: 'italic', textColor: [100, 116, 139], fontSize: 8 } },
+          { content: a.notas || '—', styles: { fontStyle: 'italic', textColor: [100, 116, 139], fontSize: 8, fillColor: [240, 253, 250] } },
           { content: '', styles: { cellPadding: 0 } },
           { content: '', styles: { cellPadding: 0 } },
-          formatMonto(a.monto),
+          { content: formatMonto(a.monto), styles: { fillColor: [240, 253, 250], textColor: [15, 118, 110], fontStyle: 'bold' } },
           { content: '', styles: { cellPadding: 0 } },
           { content: '', styles: { cellPadding: 0 } },
         ]);
@@ -340,11 +360,11 @@ export async function exportarCuentaCobroPDF({ cliente, prestamos, abonosPorPres
 
   doc.autoTable({
     startY: afterClienteY + 4,
-    head: [['#', 'Fecha', 'Detalle', 'Periodicidad', 'Total', 'Abonado', 'Saldo', 'Estado']],
+    head: [['#', 'Fecha', 'Detalle', 'Plan de pago', 'Total', 'Abonado', 'Saldo', 'Estado']],
     body,
-    theme: 'striped',
+    theme: 'grid',
     styles: { font: 'Roboto', fontSize: 8, cellPadding: 2, textColor: [30, 41, 59] },
-    headStyles: { fillColor: [124, 58, 237], textColor: [255, 255, 255], fontStyle: 'bold' },
+    headStyles: { fillColor: [76, 29, 149], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     // didDrawCell: aplicar gris+tachado a filas 'Devuelto' (R-pdf-4)
     didParseCell: (data) => {

@@ -6,9 +6,12 @@ import {
   isJewelryCategory,
   JEWELRY_CATEGORY_NAMES,
   formatMontoInput,
+  parseMontoInputValue,
   formatDigitsInput,
   formatNameInput,
+  formatProductNameInput,
   handleNumberKeyDown,
+  getNextPaymentDate,
 } from '../validation';
 
 describe('formatGramosInput', () => {
@@ -136,19 +139,29 @@ describe('getWhatsAppLink', () => {
 
 describe('formatMontoInput (existente, regression)', () => {
   it('acepta sólo dígitos', () => {
-    expect(formatMontoInput('12345')).toBe('12345');
+    expect(formatMontoInput('12345')).toBe('12.345');
   });
 
-  it('elimina caracteres no numéricos', () => {
-    expect(formatMontoInput('1.234,50')).toBe('123450');
+  it('normaliza caracteres y devuelve formato es-CO', () => {
+    expect(formatMontoInput('1.234,50')).toBe('123.450');
   });
 
   it('cappea a 99999999', () => {
-    expect(formatMontoInput('100000000')).toBe('99999999');
+    expect(formatMontoInput('100000000')).toBe('99.999.999');
   });
 
   it('devuelve "" para string vacío', () => {
     expect(formatMontoInput('')).toBe('');
+  });
+});
+
+describe('parseMontoInputValue', () => {
+  it('convierte string con separadores a número', () => {
+    expect(parseMontoInputValue('120.000')).toBe(120000);
+  });
+
+  it('maneja input vacío', () => {
+    expect(parseMontoInputValue('')).toBe(0);
   });
 });
 
@@ -178,6 +191,21 @@ describe('formatNameInput (existente, regression)', () => {
   it('trunca a 22 caracteres', () => {
     const long = 'a'.repeat(30);
     expect(formatNameInput(long).length).toBe(22);
+  });
+});
+
+describe('formatProductNameInput', () => {
+  it('acepta letras, números y espacios', () => {
+    expect(formatProductNameInput('Anillo Oro 18K')).toBe('Anillo Oro 18K');
+  });
+
+  it('elimina símbolos', () => {
+    expect(formatProductNameInput('Cadena #1 @promo!')).toBe('Cadena 1 promo');
+  });
+
+  it('trunca a 40 caracteres', () => {
+    const long = 'a'.repeat(60);
+    expect(formatProductNameInput(long).length).toBe(40);
   });
 });
 
@@ -225,5 +253,25 @@ describe('isJewelryCategory', () => {
 
   it('la constante JEWELRY_CATEGORY_NAMES está exportada y tiene los 3 valores esperados', () => {
     expect(JEWELRY_CATEGORY_NAMES).toEqual(['oro', 'plata', 'bronce']);
+  });
+});
+
+describe('getNextPaymentDate', () => {
+  it('calcula semanal con día explícito', () => {
+    const next = getNextPaymentDate({
+      fechaPrestamo: '2026-08-01T10:00:00.000Z',
+      diasPagoSugeridos: 'Semanal (Viernes)',
+      abonos: [],
+    });
+    expect(next).not.toBeNull();
+  });
+
+  it('calcula mensual', () => {
+    const next = getNextPaymentDate({
+      fechaPrestamo: '2026-08-01T10:00:00.000Z',
+      diasPagoSugeridos: 'Mensual',
+      abonos: [],
+    });
+    expect(next).not.toBeNull();
   });
 });

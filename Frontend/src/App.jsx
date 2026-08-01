@@ -18,8 +18,10 @@ import { useToast } from './hooks/useToast';
 import { 
   handleNumberKeyDown, 
   formatNameInput, 
+  formatProductNameInput,
   formatDigitsInput, 
-  formatMontoInput 
+  formatMontoInput,
+  parseMontoInputValue
 } from './utils/validation';
 import { 
   LayoutDashboard, 
@@ -289,7 +291,7 @@ function AppContent() {
         id: null,
         nombre: customName,
         cantidad: parseInt(currentQty) || 1,
-        precio: parseFloat(customPrice)
+        precio: parseMontoInputValue(customPrice)
       };
       setProductosAgregados(prev => [...prev, newItem]);
       setCustomName('');
@@ -963,19 +965,18 @@ function AppContent() {
                         type="text" 
                         placeholder="Ej. Reparación, etc."
                         value={customName}
-                        onChange={(e) => setCustomName(formatNameInput(e.target.value))}
+                        onChange={(e) => setCustomName(formatProductNameInput(e.target.value))}
                         className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Precio Unitario *</label>
                       <input 
-                        type="number" 
-                        min="0"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="Ej. 120000"
                         value={customPrice}
                         onChange={(e) => setCustomPrice(formatMontoInput(e.target.value))}
-                        onKeyDown={handleNumberKeyDown}
                         className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                       />
                     </div>
@@ -1007,12 +1008,11 @@ function AppContent() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Abono Inicial (Opcional)</label>
                   <input 
-                    type="number" 
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="Ej. 20000"
                     value={newPrestamoData.abono_inicial}
                     onChange={(e) => setNewPrestamoData(prev => ({ ...prev, abono_inicial: formatMontoInput(e.target.value) }))}
-                    onKeyDown={handleNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                   />
                 </div>
@@ -1137,13 +1137,12 @@ function AppContent() {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Monto del Abono ($) *</label>
                 <input 
-                  type="number" 
+                  type="text"
+                  inputMode="numeric"
                   required
-                  min="1"
                   placeholder="Ej. 30000"
                   value={newAbonoData.monto}
                   onChange={(e) => setNewAbonoData(prev => ({ ...prev, monto: formatMontoInput(e.target.value) }))}
-                  onKeyDown={handleNumberKeyDown}
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500/80 transition-all text-xs"
                 />
               </div>

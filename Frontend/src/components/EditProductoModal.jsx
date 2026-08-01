@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../hooks/useToast';
-import { X, Package, Image as ImageIcon, Coins } from 'lucide-react';
+import { X, Package, Image as ImageIcon, Coins, Upload } from 'lucide-react';
 import {
-  handleNumberKeyDown,
-  formatNameInput,
+  formatProductNameInput,
+  formatDigitsInput,
   formatMontoInput,
+  parseMontoInputValue,
   formatGramosInput,
   isJewelryCategory
 } from '../utils/validation';
 import { useModalA11y } from '../hooks/useModalA11y';
 
 export default function EditProductoModal({ isOpen, onClose, producto }) {
-  const { categorias, addProducto, updateProducto } = useApp();
+  const { categorias, addProducto, updateProducto, mode } = useApp();
   const { showToast } = useToast();
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -25,7 +26,10 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
   const [largo, setLargo] = useState('');
   const [costoPorGramo, setCostoPorGramo] = useState('');
   const [precioPorGramo, setPrecioPorGramo] = useState('');
+  const [gananciaEstimada, setGananciaEstimada] = useState('');
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
   const modalRef = useRef(null);
   const { titleId } = useModalA11y({ isOpen, onClose, modalRef });
 
@@ -33,14 +37,15 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
     if (producto) {
       setNombre(producto.nombre || '');
       setDescripcion(producto.descripcion || '');
-      setPrecio(producto.precio != null ? String(producto.precio) : '');
+      setPrecio(producto.precio != null ? formatMontoInput(producto.precio) : '');
       setStock(producto.stock !== undefined ? String(producto.stock) : '');
       setImagenUrl(producto.imagen_url || '');
       setCategoriaId(producto.categoria_id || '');
       setPesoGramos(producto.peso_gramos != null ? String(producto.peso_gramos) : '');
       setLargo(producto.largo != null ? String(producto.largo) : '');
-      setCostoPorGramo(producto.costo_por_gramo != null ? String(producto.costo_por_gramo) : '');
-      setPrecioPorGramo(producto.precio_por_gramo != null ? String(producto.precio_por_gramo) : '');
+      setCostoPorGramo(producto.costo_por_gramo != null ? formatMontoInput(producto.costo_por_gramo) : '');
+      setPrecioPorGramo(producto.precio_por_gramo != null ? formatMontoInput(producto.precio_por_gramo) : '');
+      setGananciaEstimada(producto.ganancia_estimada != null ? formatMontoInput(producto.ganancia_estimada) : '');
     } else {
       setNombre('');
       setDescripcion('');
@@ -52,6 +57,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       setLargo('');
       setCostoPorGramo('');
       setPrecioPorGramo('');
+      setGananciaEstimada('');
     }
   }, [producto, isOpen]);
 
@@ -64,20 +70,47 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
   const isJewelry = isJewelryCategory(selectedCategory);
 
   // Live ganancia: derivada (R-joy-3), nunca persistida. Sólo computable para joyería.
-  const parseNum = (v) => {
+  const parseDecimal = (v) => {
     if (v === '' || v == null) return null;
     const n = parseFloat(String(v).replace(',', '.'));
     return isNaN(n) ? null : n;
   };
-  const p = parseNum(pesoGramos);
-  const c = parseNum(costoPorGramo);
-  const v = parseNum(precioPorGramo);
-  const ganancia = isJewelry && (p != null && c != null && v != null) ? (v - c) * p : null;
+  const p = parseDecimal(pesoGramos);
+  const c = costoPorGramo ? parseMontoInputValue(costoPorGramo) : null;
+  const v = precioPorGramo ? parseMontoInputValue(precioPorGramo) : null;
+  const gananciaJoyeria = isJewelry && (p != null && c != null && v != null) ? (v - c) * p : null;
 
   const formatCurrency = (n) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency', currency: 'COP', minimumFractionDigits: 0
     }).format(n);
+  };
+
+  const handleImageFile = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast({ type: 'warning', title: 'Archivo inválido', message: 'Solo puedes cargar imágenes.' });
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      showToast({ type: 'warning', title: 'Imagen muy pesada', message: 'La imagen debe pesar máximo 3MB.' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') setImagenUrl(reader.result);
+    };
+    reader.onerror = () => {
+      showToast({ type: 'error', title: 'Error', message: 'No se pudo leer la imagen seleccionada.' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDropImage = (event) => {
+    event.preventDefault();
+    setIsDraggingImage(false);
+    const file = event.dataTransfer?.files?.[0];
+    handleImageFile(file);
   };
 
   const handleSubmit = async (e) => {
@@ -90,14 +123,15 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       const payload = {
         nombre,
         descripcion,
-        precio: parseFloat(precio),
-        stock: parseInt(stock),
+        precio: parseMontoInputValue(precio),
+        stock: parseInt(stock, 10),
         imagen_url: imagenUrl,
         categoria_id: categoriaId || null,
-        peso_gramos: parseNum(pesoGramos),
-        largo: parseNum(largo),
-        costo_por_gramo: parseNum(costoPorGramo),
-        precio_por_gramo: parseNum(precioPorGramo),
+        peso_gramos: parseDecimal(pesoGramos),
+        largo: parseDecimal(largo),
+        costo_por_gramo: c,
+        precio_por_gramo: v,
+        ganancia_estimada: gananciaEstimada ? parseMontoInputValue(gananciaEstimada) : null,
       };
 
       if (producto) {
@@ -155,10 +189,16 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
               required
               placeholder="Ej. Zapatos Nike Air, Camisa Polo Azul"
               value={nombre}
-              onChange={(e) => setNombre(formatNameInput(e.target.value))}
+              onChange={(e) => setNombre(formatProductNameInput(e.target.value))}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
             />
           </div>
+
+          {mode === 'supabase' && (
+            <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-700 dark:text-emerald-300">
+              Modo Supabase: estos campos se guardan en la base de datos y aparecen en recibos/historial.
+            </div>
+          )}
 
           {/* Categoría */}
           <div className="space-y-1.5">
@@ -178,41 +218,52 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
           </div>
 
           {/* Precio y Stock */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio Venta ($) *</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="0"
                 placeholder="Ej. 120000"
                 value={precio}
                 onChange={(e) => setPrecio(formatMontoInput(e.target.value))}
-                onKeyDown={handleNumberKeyDown}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ganancia estimada ($)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Ej. 45000"
+                value={gananciaEstimada}
+                onChange={(e) => setGananciaEstimada(formatMontoInput(e.target.value))}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Stock / Cantidad *</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="0"
                 placeholder="Ej. 10"
                 value={stock}
-                onChange={(e) => setStock(formatMontoInput(e.target.value))}
-                onKeyDown={handleNumberKeyDown}
+                onChange={(e) => setStock(formatDigitsInput(e.target.value, 6))}
                 className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
               />
             </div>
           </div>
 
-          {/* Joyería: peso + largo + costo/g + precio/g — sólo se muestra si la categoría es joyería */}
-          {isJewelry && (
-            <>
+          {/* Joyería */}
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                 <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <Coins size={11} /> Datos de Joyería
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">
+                  Peso: gramos del artículo · Largo: tamaño en cm · Costo/gr: costo base · Precio/gr: precio de venta por gramo.
                 </p>
               </div>
 
@@ -250,7 +301,6 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                     placeholder="Ej. 80000"
                     value={costoPorGramo}
                     onChange={(e) => setCostoPorGramo(formatMontoInput(e.target.value))}
-                    onKeyDown={handleNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                   />
                 </div>
@@ -262,28 +312,49 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                     placeholder="Ej. 120000"
                     value={precioPorGramo}
                     onChange={(e) => setPrecioPorGramo(formatMontoInput(e.target.value))}
-                    onKeyDown={handleNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                   />
                 </div>
               </div>
 
               {/* Ganancia estimada: derivada live, nunca persistida */}
-              {ganancia != null && (
+              {gananciaJoyeria != null && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                   <Coins size={14} className="text-amber-500 shrink-0" />
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Ganancia estimada:</span>
-                  <span className={`text-xs font-bold ml-auto ${ganancia >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {formatCurrency(ganancia)}
+                  <span className={`text-xs font-bold ml-auto ${gananciaJoyeria >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {formatCurrency(gananciaJoyeria)}
                   </span>
                 </div>
               )}
-            </>
-          )}
 
-          {/* Imagen URL */}
+          {/* Imagen URL + Dropzone */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">URL de Imagen (Opcional)</label>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingImage(true); }}
+              onDragLeave={() => setIsDraggingImage(false)}
+              onDrop={handleDropImage}
+              onClick={() => fileInputRef.current?.click()}
+              className={`px-3.5 py-3 border border-dashed rounded-xl cursor-pointer text-xs transition-all ${
+                isDraggingImage
+                  ? 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-300'
+                  : 'border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-violet-400'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Upload size={14} />
+                <span>Suelta una imagen aquí o haz clic para cargar</span>
+              </div>
+              <p className="text-[10px] text-center mt-1 opacity-80">PNG, JPG, WEBP (máximo 3MB)</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageFile(e.target.files?.[0])}
+            />
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input

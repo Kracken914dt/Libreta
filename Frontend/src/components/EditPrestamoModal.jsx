@@ -3,8 +3,8 @@ import { useApp } from '../context/AppContext';
 import { useToast } from '../hooks/useToast';
 import { X, Edit3 } from 'lucide-react';
 import {
-  handleNumberKeyDown,
-  formatMontoInput
+  formatMontoInput,
+  parseMontoInputValue
 } from '../utils/validation';
 import { useModalA11y } from '../hooks/useModalA11y';
 
@@ -23,7 +23,7 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
   useEffect(() => {
     if (prestamo) {
       setProducto(prestamo.producto || '');
-      setPrecioTotal(prestamo.precio_total || '');
+      setPrecioTotal(prestamo.precio_total != null ? formatMontoInput(prestamo.precio_total) : '');
       setDiasPagoSugeridos(prestamo.dias_pago_sugeridos || '');
       setNotas(prestamo.notas || '');
       
@@ -52,7 +52,7 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
     try {
       await updatePrestamo(prestamo.id, {
         producto,
-        precio_total: parseFloat(precioTotal),
+        precio_total: parseMontoInputValue(precioTotal),
         dias_pago_sugeridos: diasPagoSugeridos,
         notas,
         fecha_prestamo: fechaPrestamo
@@ -112,13 +112,12 @@ export default function EditPrestamoModal({ isOpen, onClose, prestamo }) {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Valor Total ($) *</label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               required
-              min="0"
               placeholder="Ej. 120000"
               value={precioTotal}
               onChange={(e) => setPrecioTotal(formatMontoInput(e.target.value))}
-              onKeyDown={handleNumberKeyDown}
               className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
             />
           </div>

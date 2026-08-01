@@ -253,13 +253,15 @@ export default function ProductosList({
             const cat = categorias.find(c => c.id === p.categoria_id);
             const isOutOfStock = p.stock === 0;
             const isLowStock = p.stock > 0 && p.stock <= 5;
-            // Joyería: peso/largo/ganancia sólo aplican si la categoría es joyería.
-            // Para ropa/zapatos/etc. ni siquiera calculamos (es 0 en sus datos).
+            // Joyería: si hay datos por gramo, prioriza la ganancia derivada.
+            // Para el resto, usa la ganancia manual registrada en el formulario.
             const isJewelry = isJewelryCategory(cat);
             const pg = isJewelry && p.peso_gramos != null ? parseFloat(p.peso_gramos) : null;
             const cg = isJewelry && p.costo_por_gramo != null ? parseFloat(p.costo_por_gramo) : null;
             const vg = isJewelry && p.precio_por_gramo != null ? parseFloat(p.precio_por_gramo) : null;
-            const ganancia = isJewelry && (pg != null && cg != null && vg != null) ? (vg - cg) * pg : null;
+            const gananciaJoyeria = isJewelry && (pg != null && cg != null && vg != null) ? (vg - cg) * pg : null;
+            const gananciaRegistrada = p.ganancia_estimada != null ? parseFloat(p.ganancia_estimada) : null;
+            const ganancia = gananciaJoyeria ?? gananciaRegistrada;
             const showJewelryLine = isJewelry && (pg != null || p.largo != null);
             
             return (
@@ -330,7 +332,7 @@ export default function ProductosList({
                       </p>
                     )}
 
-                    {/* Badge de ganancia estimada (derivada, no persistida) */}
+                    {/* Badge de ganancia estimada */}
                     {ganancia != null && (
                       <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-500/20">
                         <Coins size={10} />
