@@ -201,29 +201,33 @@ function drawClienteBlock(doc, cliente, totales) {
 }
 
 function drawResumenGlobal(doc, totales) {
-  const y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 240;
+  const y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 140;
   doc.setFont('Roboto', 'normal');
   doc.setFontSize(11);
   doc.setFont(undefined, 'bold');
   doc.text('Resumen Global', 15, y);
 
   doc.setFillColor(241, 245, 249);
-  doc.roundedRect(12, y + 1, 186, 11, 2, 2, 'F');
+  doc.roundedRect(12, y + 2, 186, 24, 2, 2, 'F');
 
   doc.setFontSize(9);
   doc.setFont(undefined, 'normal');
-  doc.text(`Total fiado: ${formatMonto(totales.totalFiado)}`, 15, y + 7);
-  doc.text(`Total abonado: ${formatMonto(totales.totalAbonado)}`, 75, y + 7);
+
+  // Fila 1: totales + préstamos activos
+  doc.text(`Total fiado: ${formatMonto(totales.totalFiado)}`, 15, y + 9);
+  doc.text(`Total abonado: ${formatMonto(totales.totalAbonado)}`, 75, y + 9);
+  doc.text(`Préstamos activos: ${totales.prestamosActivos}`, 195, y + 9, { align: 'right' });
+
+  // Fila 2: saldo en su propia línea, separado de los préstamos activos
   if (totales.sobrepago > 0) {
     doc.setTextColor(16, 185, 129);
-    doc.text(`Saldo a favor: ${formatMonto(totales.sobrepago)}`, 135, y + 7);
+    doc.text(`Saldo a favor: ${formatMonto(totales.sobrepago)}`, 15, y + 18);
     doc.setTextColor(0, 0, 0);
   } else {
     doc.setTextColor(225, 29, 72);
-    doc.text(`Saldo pendiente: ${formatMonto(totales.saldo)}`, 135, y + 7);
+    doc.text(`Saldo pendiente: ${formatMonto(totales.saldo)}`, 15, y + 18);
     doc.setTextColor(0, 0, 0);
   }
-  doc.text(`Préstamos activos: ${totales.prestamosActivos}`, 195, y + 7, { align: 'right' });
 }
 
 function stampFooterOnAllPages(doc, { folio, user, getPageContext }) {
@@ -361,19 +365,55 @@ export async function exportarCuentaCobroPDF({ cliente, prestamos, abonosPorPres
     styles: { font: 'Roboto', fontSize: 8, cellPadding: 2, textColor: [30, 41, 59] },
     headStyles: { fillColor: [76, 29, 149], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    // didDrawCell: aplicar gris+tachado a filas 'Devuelto' (R-pdf-4)
+    // didParseCell: diferenciar visualmente la fila del producto (préstamo) del
+    // bloque de abonos (R-pdf-4 ampliado a toda la fila, celda por celda:
+    // data.row.styles NO existe en jspdf-autotable → evitar ese camino):
+    //  - Fila de producto pendiente (con saldo) → fondo violeta suave
+    //  - Fila de producto pagado → fondo verde suave
+    //  - Fila de producto devuelto → fondo gris + itálico
+    //  - Fila individual de abono → fondo verde clarísimo (bloque compacto)
     didParseCell: (data) => {
-      if (data.section === 'body' && data.column.index === 7) {
-        const estadoVal = String(data.cell.raw || '');
+      if (data.section !== 'body') return;
+      const col = data.column.index;
+      const first = data.row.cells && data.row.cells[0];
+      // Para la col 0 la "primera celda" es la propia; para el resto ya está en row.cells
+      const firstRaw = col === 0 ? data.cell.raw : first ? first.raw : undefined;
+      const firstCell = col === 0 ? data.cell : first;
+
+      const esFilaProducto =
+        typeof firstRaw === 'string' && /^\d+$/.test(firstRaw.trim());
+      const esFilaAbono =
+        !esFilaProducto &&
+        firstCell &&
+        firstCell.styles &&
+        firstCell.styles.cellPadding &&
+        firstCell.styles.cellPadding.top <= 1;
+
+      if (esFilaProducto) {
+        const st = data.cell.styles;
+        const estadoVal = String(
+          (data.row.cells && data.row.cells[7] && data.row.cells[7].raw) || ''
+        );
         if (estadoVal === 'Devuelto') {
-          data.cell.styles.textColor = [156, 163, 175];
-          data.cell.styles.fontStyle = 'italic';
+          st.fillColor = [241, 245, 249];
+          st.textColor = [100, 116, 139];
         } else if (estadoVal === 'Pagado') {
-          data.cell.styles.textColor = [16, 185, 129];
-          data.cell.styles.fontStyle = 'bold';
-        } else if (estadoVal === 'Pendiente') {
-          data.cell.styles.textColor = [225, 29, 72];
+          st.fillColor = [236, 253, 245];
+          st.textColor = [6, 95, 70];
+        } else {
+          st.fillColor = [237, 233, 254];
         }
+        if (col === 7) {
+          const estadoActual = String(data.cell.raw || '');
+          if (estadoActual === 'Devuelto') st.fontStyle = 'italic';
+          else if (estadoActual === 'Pagado') st.fontStyle = 'bold';
+          else if (estadoActual === 'Pendiente') st.textColor = [225, 29, 72];
+        }
+        return;
+      }
+
+      if (esFilaAbono) {
+        data.cell.styles.fillColor = [240, 253, 250];
       }
     },
     columnStyles: {
