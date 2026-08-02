@@ -159,12 +159,7 @@ function drawHeader(doc, { user, now, folio }) {
   doc.text(`Folio: ${folio}`, 15, 36);
   doc.text(`Fecha: ${now.toLocaleString('es-CO')}`, 195, 36, { align: 'right' });
 
-  // Email del usuario
-  if (user && user.email) {
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    doc.text(user.email, 105, 41, { align: 'center' });
-  }
+  // Email del usuario removido a solicitud
   doc.setTextColor(0, 0, 0);
 }
 
@@ -238,7 +233,7 @@ function stampFooterOnAllPages(doc, { folio, user, getPageContext }) {
     doc.setFont('Roboto', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    const left = `Generado por La Libreta Digital${user && user.email ? ' · ' + user.email : ''}`;
+    const left = `Generado por La Libreta Digital`;
     doc.text(left, 15, 287);
     doc.text(`Folio: ${folio} · Página ${i} de ${pageCount}`, 195, 287, { align: 'right' });
     doc.setTextColor(0, 0, 0);

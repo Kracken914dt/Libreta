@@ -9,6 +9,35 @@ export const handleNumberKeyDown = (e) => {
   }
 };
 
+// Bloquear e, E, + y - en inputs decimales, pero permitir punto y coma (onKeyDown)
+export const handleDecimalNumberKeyDown = (e) => {
+  if (['e', 'E', '+', '-'].includes(e.key)) {
+    e.preventDefault();
+  }
+};
+
+// Formatear la entrada de texto para admitir decimales (permite punto/coma y dígitos)
+export const formatDecimalInput = (val) => {
+  if (val == null) return '';
+  // Permitir dígitos, puntos y comas
+  let clean = String(val).replace(/[^\d.,]/g, '');
+  // Convertir comas a puntos para homogeneizar decimales en JS
+  clean = clean.replace(',', '.');
+  // Asegurar que solo haya un punto decimal
+  const parts = clean.split('.');
+  if (parts.length > 2) {
+    clean = parts[0] + '.' + parts.slice(1).join('');
+  }
+  return clean;
+};
+
+// Convierte un string decimal a un número flotante válido, o null si está vacío/inválido
+export const parseDecimalValue = (val) => {
+  if (val === '' || val == null) return null;
+  const num = parseFloat(String(val));
+  return isNaN(num) ? null : num;
+};
+
 // Validar nombres (letras y espacios, max 22 caracteres, sin símbolos ni números)
 export const formatNameInput = (val) => {
   // Permitir letras, tildes, ñ y espacios

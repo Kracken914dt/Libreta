@@ -8,7 +8,10 @@ import {
   formatMontoInput,
   parseMontoInputValue,
   formatGramosInput,
-  isJewelryCategory
+  isJewelryCategory,
+  handleDecimalNumberKeyDown,
+  formatDecimalInput,
+  parseDecimalValue
 } from '../utils/validation';
 import { useModalA11y } from '../hooks/useModalA11y';
 
@@ -27,6 +30,7 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
   const [costoPorGramo, setCostoPorGramo] = useState('');
   const [precioPorGramo, setPrecioPorGramo] = useState('');
   const [gananciaEstimada, setGananciaEstimada] = useState('');
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
@@ -41,6 +45,10 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       setStock(producto.stock !== undefined ? String(producto.stock) : '');
       setImagenUrl(producto.imagen_url || '');
       setCategoriaId(producto.categoria_id || '');
+      
+      const isJew = producto.peso_gramos != null || producto.precio_por_gramo != null || producto.costo_por_gramo != null;
+      setUseCustomPrice(!isJew);
+
       setPesoGramos(producto.peso_gramos != null ? String(producto.peso_gramos) : '');
       setLargo(producto.largo != null ? String(producto.largo) : '');
       setCostoPorGramo(producto.costo_por_gramo != null ? formatMontoInput(producto.costo_por_gramo) : '');
@@ -58,27 +66,36 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       setCostoPorGramo('');
       setPrecioPorGramo('');
       setGananciaEstimada('');
+      setUseCustomPrice(false); // Default to jewelry mode
     }
   }, [producto, isOpen]);
 
+  // Cambiar useCustomPrice dinámicamente si cambia la categoría y no hay producto cargado
+  useEffect(() => {
+    if (!producto && categoriaId) {
+      const selectedCategory = categorias.find(c => c.id === categoriaId);
+      const isJew = isJewelryCategory(selectedCategory);
+      setUseCustomPrice(!isJew);
+    }
+  }, [categoriaId, categorias, producto]);
+
   if (!isOpen) return null;
 
-  // Detectar joyería: los campos de peso/largo/costo-g/precio-g sólo aplican
-  // cuando la categoría seleccionada es Oro/Plata/Bronce. Para ropa, zapatos,
-  // etc., no se muestran (preguntan "peso en gramos?" a una camisa es raro).
   const selectedCategory = categorias.find(c => c.id === categoriaId);
   const isJewelry = isJewelryCategory(selectedCategory);
 
-  // Live ganancia: derivada (R-joy-3), nunca persistida. Sólo computable para joyería.
+  // Live ganancia y precio para joyería
   const parseDecimal = (v) => {
     if (v === '' || v == null) return null;
-    const n = parseFloat(String(v).replace(',', '.'));
+    const n = parseFloat(String(v));
     return isNaN(n) ? null : n;
   };
   const p = parseDecimal(pesoGramos);
   const c = costoPorGramo ? parseMontoInputValue(costoPorGramo) : null;
   const v = precioPorGramo ? parseMontoInputValue(precioPorGramo) : null;
-  const gananciaJoyeria = isJewelry && (p != null && c != null && v != null) ? (v - c) * p : null;
+  
+  const calculatedPrecio = (p != null && v != null) ? p * v : null;
+  const calculatedGanancia = (p != null && c != null && v != null) ? (v - c) * p : null;
 
   const formatCurrency = (n) => {
     return new Intl.NumberFormat('es-CO', {
@@ -115,23 +132,58 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!nombre.trim() || precio === '' || stock === '') return;
+    if (!nombre.trim() || stock === '') return;
+
+    let finalPrecio = 0;
+    let finalGanancia = null;
+    let finalPeso = null;
+    let finalLargo = null;
+    let finalCostoGramo = null;
+    let finalPrecioGramo = null;
+
+    const parsedLargo = parseDecimal(largo);
+
+    if (useCustomPrice) {
+      if (precio === '') {
+        showToast({ type: 'warning', title: 'Precio requerido', message: 'Por favor ingresa el precio de venta.' });
+        return;
+      }
+      finalPrecio = parseMontoInputValue(precio);
+      finalGanancia = gananciaEstimada ? parseMontoInputValue(gananciaEstimada) : null;
+      finalLargo = parsedLargo;
+    } else {
+      const parsedPeso = parseDecimal(pesoGramos);
+      const parsedCosto = costoPorGramo ? parseMontoInputValue(costoPorGramo) : null;
+      const parsedPrecioGramo = precioPorGramo ? parseMontoInputValue(precioPorGramo) : null;
+
+      if (parsedPeso === null || parsedCosto === null || parsedPrecioGramo === null) {
+        showToast({ type: 'warning', title: 'Campos requeridos', message: 'Peso, Costo/gramo y Precio/gramo son obligatorios en joyería.' });
+        return;
+      }
+
+      finalPeso = parsedPeso;
+      finalLargo = parsedLargo;
+      finalCostoGramo = parsedCosto;
+      finalPrecioGramo = parsedPrecioGramo;
+      
+      finalPrecio = finalPeso * finalPrecioGramo;
+      finalGanancia = (finalPrecioGramo - finalCostoGramo) * finalPeso;
+    }
 
     setSubmitting(true);
     try {
-      // R-joy-4: payload has null (never "", never 0) for empty jewelry fields
       const payload = {
         nombre,
         descripcion,
-        precio: parseMontoInputValue(precio),
+        precio: finalPrecio,
         stock: parseInt(stock, 10),
         imagen_url: imagenUrl,
         categoria_id: categoriaId || null,
-        peso_gramos: parseDecimal(pesoGramos),
-        largo: parseDecimal(largo),
-        costo_por_gramo: c,
-        precio_por_gramo: v,
-        ganancia_estimada: gananciaEstimada ? parseMontoInputValue(gananciaEstimada) : null,
+        peso_gramos: finalPeso,
+        largo: finalLargo,
+        costo_por_gramo: finalCostoGramo,
+        precio_por_gramo: finalPrecioGramo,
+        ganancia_estimada: finalGanancia,
       };
 
       if (producto) {
@@ -212,65 +264,93 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
             </select>
           </div>
 
-          {/* Precio y Stock */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio Venta ($) *</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                required
-                placeholder="Ej. 120000"
-                value={precio}
-                onChange={(e) => setPrecio(formatMontoInput(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ganancia ($)</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="Ej. 45000"
-                value={gananciaEstimada}
-                onChange={(e) => setGananciaEstimada(formatMontoInput(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Stock / Cantidad *</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                required
-                placeholder="Ej. 10"
-                value={stock}
-                onChange={(e) => setStock(formatDigitsInput(e.target.value, 6))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
-              />
-            </div>
+          {/* Toggle de Precio Personalizado */}
+          <div className="flex items-center gap-2 py-2 border-t border-b border-slate-100 dark:border-slate-800/60">
+            <input
+              type="checkbox"
+              id="useCustomPrice"
+              checked={useCustomPrice}
+              onChange={(e) => setUseCustomPrice(e.target.checked)}
+              className="rounded text-violet-650 focus:ring-violet-500 h-4 w-4 bg-slate-50 dark:bg-slate-950/60 border-slate-300 dark:border-slate-800"
+            />
+            <label htmlFor="useCustomPrice" className="text-xs font-semibold text-slate-700 dark:text-slate-350 cursor-pointer select-none">
+              Usar precio de venta personalizado (No calculado por gramos)
+            </label>
           </div>
 
-          {/* Joyería */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Coins size={11} /> Datos de Joyería
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">
-                  Peso: gramos del artículo · Largo: tamaño en cm · Costo/gr: costo base · Precio/gr: precio de venta por gramo.
-                </p>
+          {/* Precio y Stock Personalizado */}
+          {useCustomPrice && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio Venta ($) *</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    placeholder="Ej. 120.000"
+                    value={precio}
+                    onChange={(e) => setPrecio(formatMontoInput(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ganancia ($)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Ej. 45.000"
+                    value={gananciaEstimada}
+                    onChange={(e) => setGananciaEstimada(formatMontoInput(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Peso (gramos)</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Stock / Cantidad *</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    placeholder="Ej. 10"
+                    value={stock}
+                    onChange={(e) => setStock(formatDigitsInput(e.target.value, 6))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Largo (cm)</label>
                   <input
                     type="text"
                     inputMode="decimal"
-                    placeholder="Ej. 5.2"
-                    value={pesoGramos}
-                    onChange={(e) => setPesoGramos(formatGramosInput(e.target.value))}
+                    placeholder="Ej. 18"
+                    value={largo}
+                    onChange={(e) => setLargo(formatDecimalInput(e.target.value))}
+                    onKeyDown={handleDecimalNumberKeyDown}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Joyería por Defecto */}
+          {!useCustomPrice && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Stock / Cantidad *</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    placeholder="Ej. 10"
+                    value={stock}
+                    onChange={(e) => setStock(formatDigitsInput(e.target.value, 6))}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                   />
                 </div>
@@ -281,30 +361,55 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                     inputMode="decimal"
                     placeholder="Ej. 18"
                     value={largo}
-                    onChange={(e) => setLargo(formatGramosInput(e.target.value, 2))}
+                    onChange={(e) => setLargo(formatDecimalInput(e.target.value))}
+                    onKeyDown={handleDecimalNumberKeyDown}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Coins size={11} /> Datos de Joyería
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">
+                  Peso, Costo/gramo y Precio/gramo son obligatorios en este modo (Largo es opcional).
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Costo / gramo ($)</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Peso (gr) *</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    required
+                    placeholder="Ej. 5.2"
+                    value={pesoGramos}
+                    onChange={(e) => setPesoGramos(formatDecimalInput(e.target.value))}
+                    onKeyDown={handleDecimalNumberKeyDown}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Costo / gr ($) *</label>
                   <input
                     type="text"
                     inputMode="numeric"
-                    placeholder="Ej. 80000"
+                    required
+                    placeholder="Ej. 80.000"
                     value={costoPorGramo}
                     onChange={(e) => setCostoPorGramo(formatMontoInput(e.target.value))}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio / gramo ($)</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Precio / gr ($) *</label>
                   <input
                     type="text"
                     inputMode="numeric"
-                    placeholder="Ej. 120000"
+                    required
+                    placeholder="Ej. 120.000"
                     value={precioPorGramo}
                     onChange={(e) => setPrecioPorGramo(formatMontoInput(e.target.value))}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
@@ -312,16 +417,29 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                 </div>
               </div>
 
-              {/* Ganancia estimada: derivada live, nunca persistida */}
-              {gananciaJoyeria != null && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                  <Coins size={14} className="text-amber-500 shrink-0" />
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Ganancia estimada:</span>
-                  <span className={`text-xs font-bold ml-auto ${gananciaJoyeria >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {formatCurrency(gananciaJoyeria)}
-                  </span>
+              {/* Valores Calculados */}
+              {(calculatedPrecio !== null || calculatedGanancia !== null) && (
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  {calculatedPrecio !== null && (
+                    <div className="flex flex-col p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Precio Venta calculado:</span>
+                      <span className="text-sm font-bold text-slate-950 dark:text-white mt-1">
+                        {formatCurrency(calculatedPrecio)}
+                      </span>
+                    </div>
+                  )}
+                  {calculatedGanancia !== null && (
+                    <div className="flex flex-col p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Ganancia estimada:</span>
+                      <span className={`text-sm font-bold mt-1 ${calculatedGanancia >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {formatCurrency(calculatedGanancia)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+          )}
 
           {/* Imagen URL + Dropzone */}
           <div className="space-y-1.5">

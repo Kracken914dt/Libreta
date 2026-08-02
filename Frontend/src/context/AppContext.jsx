@@ -836,23 +836,32 @@ export const AppProvider = ({ children }) => {
   // ACCIONES: PRODUCTOS
   // =========================================================================
   const addProducto = async ({ nombre, descripcion, precio, stock, imagen_url, categoria_id, peso_gramos, largo, costo_por_gramo, precio_por_gramo, ganancia_estimada }) => {
+    // El modal envía valores ya parseados como números
+    const numPrecio = typeof precio === 'number' ? precio : parseMontoInputValue(precio);
+    const numStock = typeof stock === 'number' ? stock : parseInt(stock, 10);
+
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
+      const payload = {
+        nombre,
+        descripcion,
+        precio: numPrecio,
+        stock: numStock,
+        imagen_url,
+        categoria_id: categoria_id || null,
+      };
+      // Solo incluir columnas de joyería si al menos una tiene valor
+      const hasJewelry = peso_gramos != null || largo != null || costo_por_gramo != null || precio_por_gramo != null || ganancia_estimada != null;
+      if (hasJewelry) {
+        payload.peso_gramos = peso_gramos;
+        payload.largo = largo;
+        payload.costo_por_gramo = costo_por_gramo;
+        payload.precio_por_gramo = precio_por_gramo;
+        payload.ganancia_estimada = ganancia_estimada;
+      }
       const { data, error } = await supabase
         .from('productos')
-        .insert([{
-          nombre,
-          descripcion,
-          precio: parseMontoInputValue(precio),
-          stock: parseInt(stock, 10),
-          imagen_url,
-          categoria_id: categoria_id || null,
-          peso_gramos,
-          largo,
-          costo_por_gramo: costo_por_gramo == null ? null : parseMontoInputValue(costo_por_gramo),
-          precio_por_gramo: precio_por_gramo == null ? null : parseMontoInputValue(precio_por_gramo),
-          ganancia_estimada: ganancia_estimada == null ? null : parseMontoInputValue(ganancia_estimada),
-        }])
+        .insert([payload])
         .select();
       if (error) throw error;
       setProductos(prev => [...prev, data[0]].sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -862,15 +871,15 @@ export const AppProvider = ({ children }) => {
         id: 'prod_' + Math.random().toString(36).substr(2, 9),
         nombre,
         descripcion,
-        precio: parseMontoInputValue(precio),
-        stock: parseInt(stock, 10),
+        precio: numPrecio,
+        stock: numStock,
         imagen_url,
         categoria_id: categoria_id || null,
-        peso_gramos,
-        largo,
-        costo_por_gramo: costo_por_gramo == null ? null : parseMontoInputValue(costo_por_gramo),
-        precio_por_gramo: precio_por_gramo == null ? null : parseMontoInputValue(precio_por_gramo),
-        ganancia_estimada: ganancia_estimada == null ? null : parseMontoInputValue(ganancia_estimada),
+        peso_gramos: peso_gramos ?? null,
+        largo: largo ?? null,
+        costo_por_gramo: costo_por_gramo ?? null,
+        precio_por_gramo: precio_por_gramo ?? null,
+        ganancia_estimada: ganancia_estimada ?? null,
         created_at: new Date().toISOString()
       };
       setProductos(prev => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
@@ -879,23 +888,31 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateProducto = async (id, { nombre, descripcion, precio, stock, imagen_url, categoria_id, peso_gramos, largo, costo_por_gramo, precio_por_gramo, ganancia_estimada }) => {
+    const numPrecio = typeof precio === 'number' ? precio : parseMontoInputValue(precio);
+    const numStock = typeof stock === 'number' ? stock : parseInt(stock, 10);
+
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
+      const payload = {
+        nombre,
+        descripcion,
+        precio: numPrecio,
+        stock: numStock,
+        imagen_url,
+        categoria_id: categoria_id || null,
+      };
+      // Solo incluir columnas de joyería si al menos una tiene valor
+      const hasJewelry = peso_gramos != null || largo != null || costo_por_gramo != null || precio_por_gramo != null || ganancia_estimada != null;
+      if (hasJewelry) {
+        payload.peso_gramos = peso_gramos;
+        payload.largo = largo;
+        payload.costo_por_gramo = costo_por_gramo;
+        payload.precio_por_gramo = precio_por_gramo;
+        payload.ganancia_estimada = ganancia_estimada;
+      }
       const { data, error } = await supabase
         .from('productos')
-        .update({
-          nombre,
-          descripcion,
-          precio: parseMontoInputValue(precio),
-          stock: parseInt(stock, 10),
-          imagen_url,
-          categoria_id: categoria_id || null,
-          peso_gramos,
-          largo,
-          costo_por_gramo: costo_por_gramo == null ? null : parseMontoInputValue(costo_por_gramo),
-          precio_por_gramo: precio_por_gramo == null ? null : parseMontoInputValue(precio_por_gramo),
-          ganancia_estimada: ganancia_estimada == null ? null : parseMontoInputValue(ganancia_estimada),
-        })
+        .update(payload)
         .eq('id', id)
         .select();
       if (error) throw error;
@@ -905,15 +922,15 @@ export const AppProvider = ({ children }) => {
       const updated = {
         nombre,
         descripcion,
-        precio: parseMontoInputValue(precio),
-        stock: parseInt(stock, 10),
+        precio: numPrecio,
+        stock: numStock,
         imagen_url,
         categoria_id: categoria_id || null,
-        peso_gramos,
-        largo,
-        costo_por_gramo: costo_por_gramo == null ? null : parseMontoInputValue(costo_por_gramo),
-        precio_por_gramo: precio_por_gramo == null ? null : parseMontoInputValue(precio_por_gramo),
-        ganancia_estimada: ganancia_estimada == null ? null : parseMontoInputValue(ganancia_estimada),
+        peso_gramos: peso_gramos ?? null,
+        largo: largo ?? null,
+        costo_por_gramo: costo_por_gramo ?? null,
+        precio_por_gramo: precio_por_gramo ?? null,
+        ganancia_estimada: ganancia_estimada ?? null,
       };
       setProductos(prev => prev.map(p => p.id === id ? { ...p, ...updated } : p).sort((a, b) => a.nombre.localeCompare(b.nombre)));
       return { id, ...updated };
