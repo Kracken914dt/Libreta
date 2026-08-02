@@ -151,6 +151,8 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
       finalPrecio = parseMontoInputValue(precio);
       finalGanancia = gananciaEstimada ? parseMontoInputValue(gananciaEstimada) : null;
       finalLargo = parsedLargo;
+      finalPeso = parseDecimal(pesoGramos);
+      finalCostoGramo = costoPorGramo ? parseMontoInputValue(costoPorGramo) : null;
     } else {
       const parsedPeso = parseDecimal(pesoGramos);
       const parsedCosto = costoPorGramo ? parseMontoInputValue(costoPorGramo) : null;
@@ -331,6 +333,33 @@ export default function EditProductoModal({ isOpen, onClose, producto }) {
                     value={largo}
                     onChange={(e) => setLargo(formatDecimalInput(e.target.value))}
                     onKeyDown={handleDecimalNumberKeyDown}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Peso (gr)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Ej. 5.2"
+                    value={pesoGramos}
+                    onChange={(e) => setPesoGramos(formatDecimalInput(e.target.value))}
+                    onKeyDown={handleDecimalNumberKeyDown}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Costo / gr ($)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Ej. 80.000"
+                    value={costoPorGramo}
+                    onChange={(e) => setCostoPorGramo(formatMontoInput(e.target.value))}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-transparent transition-all text-xs"
                   />
                 </div>

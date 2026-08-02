@@ -154,12 +154,55 @@ export const getWhatsAppLink = (telefono, nombre, deuda = 0) => {
   if (cleanPhone === '') return null;
   const phoneWithCountry = cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone;
 
-  let text = `Hola ${nombre || ''}, te saludo de la tienda. `;
+  let text = `*La Libreta Digital*\n`;
+  text += `Hola *${nombre || ''}*, te saludamos atentamente.\n\n`;
+
   if (deuda > 0) {
-    text += `Te escribo para recordarte que tienes un saldo pendiente de $${formatMonto(deuda)} en tu cuenta. ¡Que tengas un feliz día!`;
+    text += `Te escribimos para recordarte tu estado de cuenta actual:\n`;
+    text += `*Saldo Pendiente:* $${formatMonto(deuda)}\n\n`;
+    text += `Agradecemos tu atención. Si tienes alguna inquietud o ya realizaste tu pago, con gusto te atendemos por este medio. Muchas gracias.`;
   } else {
-    text += `¡Gracias por tu compra y estar al día! Que tengas un excelente día.`;
+    text += `*Estado de cuenta:* Te encuentras al día con todos tus pagos.\n`;
+    text += `Muchas gracias por tu excelente cumplimiento y confianza.`;
   }
+
+  return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
+};
+
+export const getWhatsAppAbonoLink = (telefono, nombre, montoAbonado, nuevoSaldo) => {
+  if (!telefono) return null;
+  const cleanPhone = String(telefono).replace(/\D/g, '');
+  if (cleanPhone === '') return null;
+  const phoneWithCountry = cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone;
+
+  let text = `*La Libreta Digital*\n`;
+  text += `Hola *${nombre || ''}*\n\n`;
+  text += `*Comprobante de Abono Registrado*\n`;
+  text += `*Monto Abonado:* $${formatMonto(montoAbonado)}\n`;
+  
+  if (nuevoSaldo > 0) {
+    text += `*Nuevo Saldo Pendiente:* $${formatMonto(nuevoSaldo)}\n\n`;
+    text += `Muchas gracias por tu abono.`;
+  } else {
+    text += `*Tu cuenta ha quedado totalmente cancelada ($0).*\n\n`;
+    text += `Muchas gracias por tu preferencia y pago puntual.`;
+  }
+
+  return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
+};
+
+export const getWhatsAppPrestamoLink = (telefono, nombre, producto, precioTotal) => {
+  if (!telefono) return null;
+  const cleanPhone = String(telefono).replace(/\D/g, '');
+  if (cleanPhone === '') return null;
+  const phoneWithCountry = cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone;
+
+  let text = `*La Libreta Digital*\n`;
+  text += `Hola *${nombre || ''}*\n\n`;
+  text += `*Comprobante de Fiado / Préstamo*\n`;
+  text += `*Detalle:* ${producto}\n`;
+  text += `*Valor Total:* $${formatMonto(precioTotal)}\n\n`;
+  text += `Muchas gracias por tu compra y confianza.`;
 
   return `https://wa.me/${phoneWithCountry}?text=${encodeURIComponent(text)}`;
 };

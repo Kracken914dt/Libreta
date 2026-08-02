@@ -13,6 +13,8 @@ import ProductosList from './components/ProductosList';
 import EditProductoModal from './components/EditProductoModal';
 import EditCategoriaModal from './components/EditCategoriaModal';
 import AlertModal from './components/AlertModal';
+import GuidedTour from './components/GuidedTour';
+import ConfirmReceiptModal from './components/ConfirmReceiptModal';
 import { ToastContainer } from './components/ToastContainer';
 import { useToast } from './hooks/useToast';
 import { 
@@ -21,7 +23,10 @@ import {
   formatProductNameInput,
   formatDigitsInput, 
   formatMontoInput,
-  parseMontoInputValue
+  parseMontoInputValue,
+  formatMonto,
+  getWhatsAppPrestamoLink,
+  getWhatsAppAbonoLink
 } from './utils/validation';
 import { 
   LayoutDashboard, 
@@ -46,6 +51,7 @@ function AppContent() {
     toggleMode,
     clientes,
     prestamos,
+    abonos,
     productos,
     categorias,
     addCliente,
@@ -99,6 +105,9 @@ function AppContent() {
 
   // Estado del Modal de Eliminación Personalizado
   const [deleteTarget, setDeleteTarget] = useState(null); // { type, data, name, message }
+
+  // Estado del modal de confirmación de envío de recibo
+  const [receiptModal, setReceiptModal] = useState(null); // { clienteNombre, waUrl, titulo, mensaje }
 
   // Selección rápida para formularios pre-llenados
   const [selectedClienteForPrestamo, setSelectedClienteForPrestamo] = useState(null);
@@ -354,6 +363,14 @@ function AppContent() {
         abono_inicial: newPrestamoData.abono_inicial
       });
       
+      // Datos para el modal de recibo
+      const clienteObj = clientes.find(c => c.id === clienteId);
+      const detalleProductos = productosAgregados.map(p => `${p.nombre} x${p.cantidad}`).join(', ');
+      const totalPrestamo = productosAgregados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+      const waUrl = clienteObj?.telefono
+        ? getWhatsAppPrestamoLink(clienteObj.telefono, clienteObj.nombre, detalleProductos, totalPrestamo)
+        : null;
+
       setNewPrestamoData({
         cliente_id: '',
         producto: '',
@@ -372,6 +389,14 @@ function AppContent() {
       setCustomName('');
       setCustomPrice('');
       setOpenNewPrestamo(false);
+
+      // Mostrar modal de confirmación de recibo
+      setReceiptModal({
+        clienteNombre: clienteObj?.nombre || 'Cliente',
+        waUrl,
+        titulo: '✅ Préstamo Registrado',
+        mensaje: `Se registró exitosamente el fiado de ${detalleProductos} por $${formatMonto(totalPrestamo)}. ¿Deseas enviar el comprobante al cliente?`
+      });
     } catch (err) {
       showToast({ type: 'error', title: 'Error', message: 'Error al registrar préstamo: ' + err.message });
     } finally {
@@ -406,6 +431,16 @@ function AppContent() {
         confetti({ particleCount: 40, spread: 40, colors: ['#14b8a6', '#2dd4bf'] });
       }
 
+      // Datos para el modal de recibo
+      const prestamoObj = prestamos.find(p => p.id === prestamoId);
+      const clienteAbono = prestamoObj ? clientes.find(c => c.id === prestamoObj.cliente_id) : null;
+      const montoAbonado = parseMontoInputValue(newAbonoData.monto);
+      const totalAbonadoPrevio = abonos.filter(a => a.prestamo_id === prestamoId).reduce((s, a) => s + a.monto, 0);
+      const nuevoSaldo = Math.max(0, (prestamoObj?.precio_total || 0) - totalAbonadoPrevio - montoAbonado);
+      const waUrlAbono = clienteAbono?.telefono
+        ? getWhatsAppAbonoLink(clienteAbono.telefono, clienteAbono.nombre, montoAbonado, nuevoSaldo)
+        : null;
+
       setNewAbonoData({
         prestamo_id: '',
         monto: '',
@@ -414,6 +449,14 @@ function AppContent() {
       });
       setSelectedPrestamoForAbono(null);
       setOpenNewAbono(false);
+
+      // Mostrar modal de confirmación de recibo
+      setReceiptModal({
+        clienteNombre: clienteAbono?.nombre || 'Cliente',
+        waUrl: waUrlAbono,
+        titulo: '✅ Abono Registrado',
+        mensaje: `Se registró un abono de $${formatMonto(montoAbonado)}. Saldo restante: $${formatMonto(nuevoSaldo)}. ¿Deseas enviar el comprobante al cliente?`
+      });
     } catch (err) {
       showToast({ type: 'error', title: 'Error', message: 'Error al registrar abono: ' + err.message });
     } finally {
@@ -436,7 +479,7 @@ function AppContent() {
         </div>
 
         {/* Menú de Navegación */}
-        <nav className="flex-1 p-4 space-y-1.5">
+        <nav id="tour-nav-menu" className="flex-1 p-4 space-y-1.5">
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
@@ -542,6 +585,7 @@ function AppContent() {
           <div className="flex items-center gap-3">
             {/* Toggle de Modo Claro / Oscuro */}
             <button
+              id="tour-theme-toggle"
               onClick={toggleTheme}
               className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 transition-all shadow-sm dark:shadow-none group"
               aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
@@ -1189,6 +1233,19 @@ function AppContent() {
 
       {/* ToastContainer: non-modal notifications (z-100, top-right) */}
       <ToastContainer />
+
+      {/* Modal de Confirmación de Envío de Recibo */}
+      <ConfirmReceiptModal
+        isOpen={!!receiptModal}
+        onClose={() => setReceiptModal(null)}
+        clienteNombre={receiptModal?.clienteNombre}
+        waUrl={receiptModal?.waUrl}
+        titulo={receiptModal?.titulo}
+        mensaje={receiptModal?.mensaje}
+      />
+
+      {/* Tour Guiado Interactivos con Driver.js (Botón ? Flotante) */}
+      <GuidedTour />
 
     </div>
   );

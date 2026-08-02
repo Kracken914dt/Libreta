@@ -184,25 +184,40 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
     .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
     .slice(0, 5);
 
-  // Datos para gráfico simple de cobros de la última semana
+  // Datos para gráfico de cobros de la última semana
   const getCobrosUltimosDias = () => {
     const dias = [];
     const hoy = new Date();
-    
+
+    // Parseador de fecha local resistente a desfasajes UTC (YYYY-MM-DD, ISO, etc.)
+    const parseLocalDate = (dateInput) => {
+      if (!dateInput) return null;
+      if (dateInput instanceof Date) return dateInput;
+      const str = String(dateInput);
+      if (str.length === 10 && str.includes('-')) {
+        const [y, m, day] = str.split('-').map(Number);
+        return new Date(y, m - 1, day);
+      }
+      const parsed = new Date(str);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const isSameDay = (f1Str, f2Date) => {
+      const d1 = parseLocalDate(f1Str);
+      if (!d1) return false;
+      return d1.getFullYear() === f2Date.getFullYear() &&
+             d1.getMonth() === f2Date.getMonth() &&
+             d1.getDate() === f2Date.getDate();
+    };
+
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(hoy.getDate() - i);
+      const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - i);
       const dString = d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric' });
       
-      // Sumar abonos de este día
-      const totalDia = abonos
-        .filter(a => {
-          const fechaAbono = new Date(a.fecha_abono);
-          return fechaAbono.getDate() === d.getDate() &&
-                 fechaAbono.getMonth() === d.getMonth() &&
-                 fechaAbono.getFullYear() === d.getFullYear();
-        })
-        .reduce((sum, a) => sum + a.monto, 0);
+      // Sumar todos los ingresos reales de caja de este día
+      const totalDia = transaccionesRecaudo
+        .filter(t => t.cajaImpact > 0 && isSameDay(t.fecha, d))
+        .reduce((sum, t) => sum + t.cajaImpact, 0);
 
       dias.push({ nombre: dString, valor: totalDia });
     }
@@ -232,7 +247,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
       </div>
 
       {/* Tarjetas de Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div id="tour-dashboard-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Saldo Pendiente */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl relative overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg dark:hover:shadow-violet-950/20 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 dark:bg-violet-600/10 rounded-full blur-2xl group-hover:bg-violet-600/15 dark:group-hover:bg-violet-600/20 transition-all duration-300"></div>
@@ -313,6 +328,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
       {/* Botones de Acción Rápida */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button 
+          id="tour-new-loan-btn"
           onClick={() => setOpenNewPrestamo(true)}
           className="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
         >
@@ -352,7 +368,7 @@ export default function Dashboard({ setActiveTab, setOpenNewPrestamo, setOpenNew
       )}
 
       {/* Gráfico y Actividad Reciente */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div id="tour-recent-activity" className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Recaudación Reciente */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl lg:col-span-3 flex flex-col justify-between shadow-sm">
           <div>
