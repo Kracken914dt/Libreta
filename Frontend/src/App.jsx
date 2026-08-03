@@ -28,6 +28,7 @@ import {
   getWhatsAppPrestamoLink,
   getWhatsAppAbonoLink
 } from './utils/validation';
+import { frecuenciaDiasDesdeLabel, calcularEstadoCuotas } from './utils/planCuotas';
 import { 
   LayoutDashboard, 
   Users, 
@@ -150,6 +151,11 @@ function AppContent() {
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('');
 
+  // Estados de Plan de Cuotas Personalizado
+  const [usarPlanCuotasCustom, setUsarPlanCuotasCustom] = useState(false);
+  const [numCuotasCustom, setNumCuotasCustom] = useState('');
+  const [valorCuotaCustom, setValorCuotaCustom] = useState('');
+
   // Pre-llenar fecha y hora actual en modales al abrirse
   useEffect(() => {
     if (openNewPrestamo) {
@@ -157,6 +163,10 @@ function AppContent() {
         ...prev,
         fecha_prestamo: getLocalDateTimeString()
       }));
+    } else {
+      setUsarPlanCuotasCustom(false);
+      setNumCuotasCustom('');
+      setValorCuotaCustom('');
     }
   }, [openNewPrestamo]);
 
@@ -354,13 +364,35 @@ function AppContent() {
 
     setSubmitting(true);
     try {
+      const totalFinanciar = productosAgregados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0) - (newPrestamoData.abono_inicial ? parseMontoInputValue(newPrestamoData.abono_inicial) : 0);
+      const freqDays = frecuenciaDiasDesdeLabel(newPrestamoData.dias_pago_sugeridos);
+      let plan_cuotas = null;
+
+      if (usarPlanCuotasCustom && numCuotasCustom && valorCuotaCustom) {
+        plan_cuotas = {
+          numero_cuotas: Math.min(200, parseInt(numCuotasCustom, 10) || 1),
+          monto_cuota: parseMontoInputValue(valorCuotaCustom),
+          frecuencia_dias: freqDays,
+          primera_fecha: newPrestamoData.fecha_prestamo
+        };
+      } else if (newPrestamoData.dias_pago_sugeridos && totalFinanciar > 0) {
+        const autoCuotas = 4;
+        plan_cuotas = {
+          numero_cuotas: autoCuotas,
+          monto_cuota: Math.round(totalFinanciar / autoCuotas),
+          frecuencia_dias: freqDays,
+          primera_fecha: newPrestamoData.fecha_prestamo
+        };
+      }
+
       await addPrestamo({
         cliente_id: clienteId,
         productos_seleccionados: productosAgregados,
         dias_pago_sugeridos: newPrestamoData.dias_pago_sugeridos,
         notas: newPrestamoData.notas,
         fecha_prestamo: newPrestamoData.fecha_prestamo,
-        abono_inicial: newPrestamoData.abono_inicial
+        abono_inicial: newPrestamoData.abono_inicial,
+        plan_cuotas
       });
       
       // Datos para el modal de recibo
@@ -1096,6 +1128,96 @@ function AppContent() {
                 </div>
               </div>
 
+              {/* Plan de Cuotas Personalizado */}
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="usarPlanCuotasCustom"
+                    checked={usarPlanCuotasCustom}
+                    onChange={(e) => setUsarPlanCuotasCustom(e.target.checked)}
+                    className="rounded text-violet-600 focus:ring-violet-500 h-4 w-4 bg-slate-50 dark:bg-slate-950/60 border-slate-300 dark:border-slate-800 cursor-pointer"
+                  />
+                  <label htmlFor="usarPlanCuotasCustom" className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                    Definir plan de cuotas personalizado
+                  </label>
+                </div>
+
+                {usarPlanCuotasCustom && (
+                  <div className="space-y-3 bg-violet-500/5 border border-violet-500/10 rounded-xl p-3.5 animate-fade-in">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Número de cuotas (Máx. 200) *</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={200}
+                          placeholder="Ej. 4"
+                          value={numCuotasCustom}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') {
+                              setNumCuotasCustom('');
+                              return;
+                            }
+                            const v = parseInt(val, 10);
+                            if (isNaN(v) || v <= 0) setNumCuotasCustom('');
+                            else setNumCuotasCustom(Math.min(200, v));
+                          }}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Valor por cuota ($) *</label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="Ej. 25.000"
+                          value={valorCuotaCustom}
+                          onChange={(e) => setValorCuotaCustom(formatMontoInput(e.target.value))}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-violet-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Label Sugestivo / Cálculos */}
+                    {(() => {
+                      const totalProducts = productosAgregados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+                      const abonoIni = parseMontoInputValue(newPrestamoData.abono_inicial);
+                      const totalFinanciar = Math.max(0, totalProducts - abonoIni);
+                      const numC = parseInt(numCuotasCustom, 10) || 0;
+                      const valC = parseMontoInputValue(valorCuotaCustom);
+
+                      if (numC > 0 && valC > 0) {
+                        const totalCalculado = numC * valC;
+                        const esDiferente = totalCalculado !== totalFinanciar;
+                        return (
+                          <div className="text-[11px] leading-relaxed">
+                            <p className="font-semibold text-violet-600 dark:text-violet-400">
+                              Plan ingresado: {numC} cuotas × ${formatMonto(valC)} = ${formatMonto(totalCalculado)}
+                            </p>
+                            {esDiferente && totalFinanciar > 0 && (
+                              <p className="text-amber-600 dark:text-amber-400 font-medium mt-1 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                                ⚠️ El acumulado (${formatMonto(totalCalculado)}) difiere del total a financiar (${formatMonto(totalFinanciar)}). La última cuota absorberá la diferencia a ${formatMonto(Math.max(0, totalFinanciar - (numC - 1) * valC))}.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      } else if (totalFinanciar > 0) {
+                        const sugCuotas = 4;
+                        const sugMonto = Math.round(totalFinanciar / sugCuotas);
+                        return (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            💡 <span className="font-semibold">Sugerencia:</span> Para un saldo de ${formatMonto(totalFinanciar)}, puedes establecer p. ej. {sugCuotas} cuotas de ${formatMonto(sugMonto)}.
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                )}
+              </div>
+
               {/* Notas */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Notas / Detalles adicionales (Máx. 100 caracteres)</label>
@@ -1176,6 +1298,63 @@ function AppContent() {
                   </select>
                 )}
               </div>
+
+              {/* Selector de Cuota y Cálculo Sugerido */}
+              {(() => {
+                const targetPrestamoId = selectedPrestamoForAbono?.id || newAbonoData.prestamo_id;
+                const targetPrestamo = prestamos.find(p => p.id === targetPrestamoId);
+                if (!targetPrestamo) return null;
+
+                const abonosDelP = abonos.filter(a => a.prestamo_id === targetPrestamoId);
+                const st = calcularEstadoCuotas({ prestamo: targetPrestamo, abonos: abonosDelP });
+                if (!st.activo) return null;
+
+                return (
+                  <div className="space-y-2 bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 animate-fade-in">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex justify-between items-center">
+                      <span>Cuota Objetivo a Abonar</span>
+                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold">
+                        {st.cuotaActual ? `Siguiente: Cuota #${st.cuotaActual.numero}` : 'Todas completadas'}
+                      </span>
+                    </label>
+                    <select
+                      value={newAbonoData.cuota_numero || ''}
+                      onChange={(e) => {
+                        const numSelected = parseInt(e.target.value, 10);
+                        if (!numSelected) {
+                          const sug = st.cuotaActual ? st.cuotaActual.saldo : 0;
+                          setNewAbonoData(prev => ({
+                            ...prev,
+                            cuota_numero: '',
+                            monto: sug > 0 ? formatMontoInput(sug) : prev.monto
+                          }));
+                        } else {
+                          const cuotaTarget = st.cuotas.find(c => c.numero === numSelected);
+                          const sugMonto = cuotaTarget ? cuotaTarget.saldo || cuotaTarget.monto : 0;
+                          setNewAbonoData(prev => ({
+                            ...prev,
+                            cuota_numero: numSelected,
+                            monto: sugMonto > 0 ? formatMontoInput(sugMonto) : prev.monto
+                          }));
+                        }
+                      }}
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white text-xs focus:outline-none focus:border-teal-500"
+                    >
+                      <option value="">-- Cuota Sucesiva Auto ({st.cuotaActual ? `Cuota #${st.cuotaActual.numero} - $${formatMonto(st.cuotaActual.saldo)}` : 'Libre'}) --</option>
+                      {st.cuotas.map((c) => (
+                        <option key={c.numero} value={c.numero}>
+                          Cuota #{c.numero} · Vence: {new Date(c.fechaISO).toLocaleDateString('es-CO')} · {c.completada ? 'Pagada ($0)' : `Falta $${formatMonto(c.saldo)}`}
+                        </option>
+                      ))}
+                    </select>
+                    {st.cuotaActual && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        💡 Saldo esperado para Cuota #{st.cuotaActual.numero}: <strong className="text-slate-700 dark:text-slate-200">${formatMonto(st.cuotaActual.saldo)}</strong>. Puedes modificar el monto libremente.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Cantidad Abono */}
               <div className="space-y-1.5">

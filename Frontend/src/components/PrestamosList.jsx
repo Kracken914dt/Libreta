@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Pagination } from './Pagination';
 import { PAGE_SIZE } from '../constants/ui';
+import { TIPO_PAGO_CHIP_CLASS, TIPO_PAGO_LABEL } from '../utils/planCuotas';
 
 export default function PrestamosList({ 
   setOpenNewPrestamo, 
@@ -368,6 +369,7 @@ export default function PrestamosList({
                               <tr className="bg-slate-100/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                                 <th className="p-3">Fecha del Abono</th>
                                 <th className="p-3">Monto Abonado</th>
+                                <th className="p-3">Cuota</th>
                                 <th className="p-3">Notas</th>
                                 <th className="p-3 text-right">Acción</th>
                               </tr>
@@ -377,6 +379,18 @@ export default function PrestamosList({
                                   <tr key={abono.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-700 dark:text-slate-200">
                                     <td className="p-3 text-slate-400 dark:text-slate-500">{formatDate(abono.fecha_abono)}</td>
                                     <td className="p-3 font-semibold text-teal-600 dark:text-teal-400">{formatCurrency(abono.monto)}</td>
+                                    <td className="p-3 text-xs">
+                                      {abono.tipo_pago && TIPO_PAGO_LABEL[abono.tipo_pago] ? (
+                                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold border ${TIPO_PAGO_CHIP_CLASS[abono.tipo_pago] || ''}`}>
+                                          {TIPO_PAGO_LABEL[abono.tipo_pago]}{abono.tipo_pago === 'atrasado' && abono.dias_diferencia ? ` (${abono.dias_diferencia}d)` : ''}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-400">—</span>
+                                      )}
+                                      {abono.resumen_cuota && (
+                                        <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{abono.resumen_cuota}</span>
+                                      )}
+                                    </td>
                                     <td className="p-3 italic text-slate-500 dark:text-slate-400">{abono.notes || abono.notas || '-'}</td>
                                     <td className="p-3 text-right">
                                       <button

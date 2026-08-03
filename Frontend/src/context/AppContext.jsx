@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSupabaseClient, isSupabaseConfigured, updateSupabaseCredentials } from '../supabaseClient';
 import { useToast } from '../hooks/useToast';
 import { parseMontoInputValue } from '../utils/validation';
+import { clasificarPago } from '../utils/planCuotas';
 
 const AppContext = createContext();
 
@@ -483,7 +484,7 @@ export const AppProvider = ({ children }) => {
   // =========================================================================
   // ACCIONES: PRÉSTAMOS
   // =========================================================================
-  const addPrestamo = async ({ cliente_id, productos_seleccionados, dias_pago_sugeridos, notas, fecha_prestamo, abono_inicial }) => {
+  const addPrestamo = async ({ cliente_id, productos_seleccionados, dias_pago_sugeridos, notas, fecha_prestamo, abono_inicial, plan_cuotas }) => {
     const totalAmount = productos_seleccionados.reduce((sum, p) => sum + ((Number(p.precio) || 0) * (parseInt(p.cantidad, 10) || 0)), 0);
     const initialAbonoAmount = abono_inicial ? parseMontoInputValue(abono_inicial) : 0;
     const estado = initialAbonoAmount >= totalAmount ? 'pagado' : 'pendiente';
@@ -500,18 +501,23 @@ export const AppProvider = ({ children }) => {
 
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
+      const insertPayload = {
+        cliente_id,
+        producto: productoString,
+        precio_total: totalAmount,
+        fecha_prestamo: fecha,
+        estado,
+        dias_pago_sugeridos,
+        notas,
+        productos_fiados: productos_seleccionados
+      };
+      if (plan_cuotas) {
+        insertPayload.plan_cuotas = plan_cuotas;
+      }
+
       const { data: prestamoData, error: pError } = await supabase
         .from('prestamos')
-        .insert([{
-          cliente_id,
-          producto: productoString,
-          precio_total: totalAmount,
-          fecha_prestamo: fecha,
-          estado,
-          dias_pago_sugeridos,
-          notas,
-          productos_fiados: productos_seleccionados
-        }])
+        .insert([insertPayload])
         .select();
 
       if (pError) {
@@ -522,14 +528,29 @@ export const AppProvider = ({ children }) => {
 
       async function finishCreatePrestamo(nuevoPrestamo) {
         if (initialAbonoAmount > 0) {
+          const clasificacionInicial = plan_cuotas ? clasificarPago({
+            prestamo: { precio_total: totalAmount, plan_cuotas },
+            abonos: [],
+            monto: initialAbonoAmount,
+            fechaAbono: fecha
+          }) : { aplicable: false };
+
+          const abonoInsertPayload = {
+            prestamo_id: nuevoPrestamo.id,
+            monto: initialAbonoAmount,
+            fecha_abono: fecha,
+            notas: 'Abono inicial registrado al fiar'
+          };
+          if (clasificacionInicial.aplicable) {
+            abonoInsertPayload.cuota_numero = clasificacionInicial.cuotaNumero;
+            abonoInsertPayload.tipo_pago = clasificacionInicial.tipoPago;
+            abonoInsertPayload.dias_diferencia = clasificacionInicial.diasDiferencia;
+            abonoInsertPayload.resumen_cuota = clasificacionInicial.resumen;
+          }
+
           const { data: abonoData, error: aError } = await supabase
             .from('abonos')
-            .insert([{
-              prestamo_id: nuevoPrestamo.id,
-              monto: initialAbonoAmount,
-              fecha_abono: fecha,
-              notas: 'Abono inicial registrado al fiar'
-            }])
+            .insert([abonoInsertPayload])
             .select();
 
           if (aError) {
@@ -563,16 +584,28 @@ export const AppProvider = ({ children }) => {
         dias_pago_sugeridos,
         notas,
         productos_fiados: productos_seleccionados,
+        plan_cuotas: plan_cuotas || null,
         created_at: new Date().toISOString()
       };
 
       if (initialAbonoAmount > 0) {
+        const clasificacionInicial = plan_cuotas ? clasificarPago({
+          prestamo: { precio_total: totalAmount, plan_cuotas },
+          abonos: [],
+          monto: initialAbonoAmount,
+          fechaAbono: fecha
+        }) : { aplicable: false };
+
         const nuevoAbono = {
           id: 'a_' + Math.random().toString(36).substr(2, 9),
           prestamo_id: nuevoPrestamoId,
           monto: initialAbonoAmount,
           fecha_abono: fecha,
           notas: 'Abono inicial registrado al fiar',
+          cuota_numero: clasificacionInicial.aplicable ? clasificacionInicial.cuotaNumero : null,
+          tipo_pago: clasificacionInicial.aplicable ? clasificacionInicial.tipoPago : null,
+          dias_diferencia: clasificacionInicial.aplicable ? clasificacionInicial.diasDiferencia : null,
+          resumen_cuota: clasificacionInicial.aplicable ? clasificacionInicial.resumen : null,
           created_at: new Date().toISOString()
         };
 
@@ -616,7 +649,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const updatePrestamo = async (id, { producto, precio_total, dias_pago_sugeridos, notas, fecha_prestamo }) => {
+  const updatePrestamo = async (id, { producto, precio_total, dias_pago_sugeridos, notas, fecha_prestamo, plan_cuotas }) => {
     const totalAmount = parseMontoInputValue(precio_total);
     const fecha = new Date(fecha_prestamo).toISOString();
 
@@ -627,24 +660,7 @@ export const AppProvider = ({ children }) => {
 
     if (mode === 'supabase') {
       const supabase = getSupabaseClient();
-      const { data, error } = await supabase
-        .from('prestamos')
-        .update({
-          producto,
-          precio_total: totalAmount,
-          fecha_prestamo: fecha,
-          estado,
-          dias_pago_sugeridos,
-          notas
-        })
-        .eq('id', id)
-        .select();
-
-      if (error) throw error;
-      setPrestamos(prev => prev.map(p => p.id === id ? data[0] : p));
-      return data[0];
-    } else {
-      const updated = {
+      const updatePayload = {
         producto,
         precio_total: totalAmount,
         fecha_prestamo: fecha,

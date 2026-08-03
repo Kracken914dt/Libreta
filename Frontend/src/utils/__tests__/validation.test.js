@@ -101,7 +101,7 @@ describe('getWhatsAppLink', () => {
     expect(match).not.toBeNull();
     const decoded = decodeURIComponent(match[1]);
     expect(decoded).toContain('50.000');
-    expect(decoded).toContain('pendiente');
+    expect(decoded.toLowerCase()).toContain('pendiente');
   });
 
   it('incluye mensaje de "al día" cuando deuda es 0', () => {

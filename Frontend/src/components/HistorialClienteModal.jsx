@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 import { X, FileDown, MessageSquare, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { formatMonto, getWhatsAppLink, getNextPaymentDate } from '../utils/validation';
+import { TIPO_PAGO_CHIP_CLASS, TIPO_PAGO_LABEL } from '../utils/planCuotas';
 
 /**
  * HistorialClienteModal — Modal centrado con el historial completo de un cliente.
@@ -284,12 +285,17 @@ export function HistorialClienteModal({
                           {abonosDelPrestamo.map(abono => {
                             const fechaAbono = abono.fecha_abono || abono.fecha;
                             return (
-                              <li key={abono.id} className="flex items-center justify-between text-xs">
-                                <span className="text-slate-600 dark:text-slate-400">
+                              <li key={abono.id} className="flex items-center justify-between text-xs gap-2">
+                                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 min-w-0 flex-1">
                                   {fechaAbono ? new Date(fechaAbono).toLocaleDateString('es-CO') : '—'}
-                                  {abono.notas && ` · ${abono.notas}`}
+                                  {abono.tipo_pago && TIPO_PAGO_LABEL[abono.tipo_pago] && (
+                                    <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold border ${TIPO_PAGO_CHIP_CLASS[abono.tipo_pago] || ''}`}>
+                                      {TIPO_PAGO_LABEL[abono.tipo_pago]}{abono.tipo_pago === 'atrasado' && abono.dias_diferencia ? ` (${abono.dias_diferencia}d)` : ''}
+                                    </span>
+                                  )}
+                                  {abono.notas && <span className="truncate"> · {abono.notas}</span>}
                                 </span>
-                                <span className="font-semibold text-teal-600 dark:text-teal-400">$ {formatMonto(abono.monto || 0)}</span>
+                                <span className="font-semibold text-teal-600 dark:text-teal-400 flex-shrink-0">$ {formatMonto(abono.monto || 0)}</span>
                               </li>
                             );
                           })}
@@ -321,6 +327,7 @@ export function HistorialClienteModal({
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Fecha</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Préstamo</th>
                   <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Monto</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Cuota</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Notas</th>
                 </tr>
               </thead>
@@ -361,6 +368,18 @@ export function HistorialClienteModal({
                         </td>
                         <td className="px-3 py-2 text-right font-semibold text-teal-600 dark:text-teal-400">
                           $ {formatMonto(abono.monto || 0)}
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {abono.tipo_pago && TIPO_PAGO_LABEL[abono.tipo_pago] ? (
+                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold border ${TIPO_PAGO_CHIP_CLASS[abono.tipo_pago] || ''}`}>
+                              {TIPO_PAGO_LABEL[abono.tipo_pago]}{abono.tipo_pago === 'atrasado' && abono.dias_diferencia ? ` (${abono.dias_diferencia}d)` : ''}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                          {abono.resumen_cuota && (
+                            <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{abono.resumen_cuota}</span>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-slate-600 dark:text-slate-400 text-xs">
                           {abono.notas || '—'}
